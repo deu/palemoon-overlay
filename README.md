@@ -14,7 +14,7 @@ To add it to your layman overlays:
             <email>de@uio.re</email>
             <name>deu</name>
         </owner>
-    <source type="git">https://gitlab.com/deu/palemoon-overlay.git</source>
+        <source type="git">https://gitlab.com/deu/palemoon-overlay.git</source>
     </repo>
 </repositories>
 EOF
