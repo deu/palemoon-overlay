@@ -10,11 +10,11 @@ To add it to your layman overlays:
         <name>palemoon</name>
         <description>Unofficial Gentoo overlay for the Pale Moon (http://www.palemoon.org/) web browser.</description>
         <homepage>https://gitlab.com/deu/palemoon-overlay</homepage>
-        <owner>
+        <owner type="person">
             <email>de@uio.re</email>
             <name>deu</name>
         </owner>
-    <source type="git">https://gitlab.com/deu/palemoon-overlay.git</source>
+        <source type="git">https://gitlab.com/deu/palemoon-overlay.git</source>
     </repo>
 </repositories>
 EOF
