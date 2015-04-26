@@ -27,6 +27,9 @@ IUSE="+official-branding +optimize +system-libs"
 
 SRC_URI="${SRC_URI} ftp://source:get@ftp.palemoon.org/${P}-source.7z"
 
+DEPEND="
+	app-arch/p7zip"
+
 RDEPEND="
 	>=dev-lang/perl-5.6
 	>=x11-libs/gtk+-2.10
