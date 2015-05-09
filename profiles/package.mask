@@ -1,4 +1,4 @@
-# All versions previous to this will continuously crash on Mozilla's
+# All versions previous to 25.3.2 will continuously crash on Mozilla's
 # badly signed addons.
 # (See: http://forum.palemoon.org/viewtopic.php?t=8047&p=52880)
 <www-client/palemoon-25.3.2
