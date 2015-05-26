@@ -62,7 +62,7 @@ RDEPEND="
 		>=media-libs/libvpx-1.0.0
 		>=app-text/hunspell-1.3
 		>=virtual/libffi-3.0.9
-		>=dev-db/sqlite-3.7.17[secure-delete]
+		>=dev-db/sqlite-3.8.8.3[secure-delete]
 	)"
 
 REQUIRED_USE="^^ ( alsa oss )"
