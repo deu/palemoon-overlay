@@ -40,7 +40,7 @@ RDEPEND="
 	media-libs/fontconfig
 	>=media-libs/gstreamer-0.10
 	>=media-plugins/gst-plugins-meta-0.10
-	>=dev-util/pkgconf-0.9.0
+	virtual/pkgconfig
 	>=sys-apps/dbus-0.60
 	>=dev-libs/dbus-glib-0.60
 	media-libs/alsa-lib
