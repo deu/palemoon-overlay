@@ -38,8 +38,8 @@ RDEPEND="
 	>=app-arch/zip-2.3
 	>=media-libs/freetype-2.1.0
 	media-libs/fontconfig
-	>=media-libs/gstreamer-0.10
-	>=media-plugins/gst-plugins-meta-0.10
+	>=media-libs/gstreamer-0.10.25:0.10
+	>=media-libs/gst-plugins-base-0.10:0.10
 	virtual/pkgconfig
 	>=sys-apps/dbus-0.60
 	>=dev-libs/dbus-glib-0.60
