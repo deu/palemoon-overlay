@@ -9,7 +9,6 @@
 *palemoon-bin-25.5.0 (15 Jul 2015)
 
   15 Jul 2015; Anupam Srivastava <950c9ec2@opayq.com>
-  +palemoon-bin-25.5.0.ebuild, +files/all-gentoo-1-cve-2015-4000.js,
-  +files/all-gentoo-1.js, +files/all-gentoo.js, +files/local-settings.js,
-  +files/palemoon-bin.desktop, +files/palemoon-bin-prefs.js:
+  +palemoon-bin-25.5.0.ebuild, +files/palemoon-bin.desktop,
+  +files/palemoon-bin-prefs.js:
   palemoon-bin, the firefox clone as you know it

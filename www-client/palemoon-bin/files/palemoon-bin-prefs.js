@@ -1,6 +1,6 @@
-pref("app.update.enabled",                 false);
-pref("app.update.autoInstallEnabled",      false);
-pref("browser.display.use_system_colors",  true);
-pref("browser.shell.checkDefaultBrowser",  false); 
-pref("browser.EULA.override",              true); 
-pref("intl.locale.matchOS",                true);
+pref("app.update.enabled",                false);
+pref("browser.backspace_action",          0);
+pref("browser.ctrlTab.previews",          false);
+pref("intl.locale.matchOS",               true);
+pref("general.useragent.locale",          "chrome://global/locale/intl.properties");
+pref("browser.display.use_system_colors", true);

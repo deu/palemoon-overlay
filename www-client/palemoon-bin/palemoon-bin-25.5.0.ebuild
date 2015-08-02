@@ -1,7 +1,8 @@
-# Copyright 2015 Gentoo Foundation
+# Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
+# $Header: $
 
-EAPI="5"
+EAPI=5
 
 inherit eutils multilib pax-utils fdo-mime gnome2-utils nsplugins
 
@@ -14,7 +15,7 @@ SRC_URI="
 HOMEPAGE="https://www.palemoon.org/"
 RESTRICT="strip mirror"
 
-KEYWORDS="-* ~amd64 ~x86"
+KEYWORDS="-* amd64 x86"
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="startup-notification"
@@ -86,13 +87,6 @@ src_install() {
 	# Install palemoon in /opt
 	dodir ${MOZILLA_FIVE_HOME%/*}
 	mv "${S}" "${ED}"${MOZILLA_FIVE_HOME} || die
-
-	# Fix prefs that make no sense for a system-wide install
-	insinto ${MOZILLA_FIVE_HOME}/defaults/pref/
-	doins "${FILESDIR}"/local-settings.js
-	# Copy preferences file so we can do a simple rename.
-	cp "${FILESDIR}"/all-gentoo-1.js \
-		"${ED}"${MOZILLA_FIVE_HOME}/all-gentoo.js || die
 
 	# Create /usr/bin/palemoon-bin
 	dodir /usr/bin/
