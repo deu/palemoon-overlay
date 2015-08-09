@@ -68,9 +68,9 @@ RDEPEND="
 REQUIRED_USE="^^ ( alsa oss )"
 
 src_unpack() {
-	unpack ${A}
-	mv "Pale-Moon-${PV}_Release" "${S}"
+	mkdir -p "${S}"
 	cd "${S}"
+	unpack ${A}
 
 	#HACK :-(
 	chmod -R 777 .
