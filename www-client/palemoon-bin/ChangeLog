@@ -1,0 +1,14 @@
+# ChangeLog for www-client/firefox-bin
+
+*palemoon-bin-25.6.0 (01 Aug 2015)
+
+  01 Aug 2015; Anupam Srivastava <950c9ec2@opayq.com>
+  +palemoon-bin-25.6.0.ebuild:
+  New version released
+
+*palemoon-bin-25.5.0 (15 Jul 2015)
+
+  15 Jul 2015; Anupam Srivastava <950c9ec2@opayq.com>
+  +palemoon-bin-25.5.0.ebuild, +files/palemoon-bin.desktop,
+  +files/palemoon-bin-prefs.js:
+  palemoon-bin, the firefox clone as you know it
