@@ -17,7 +17,7 @@ REQUIRED_BUILDSPACE='12G'
 
 inherit palemoon-0 eutils flag-o-matic multilib mozlinguas
 
-KEYWORDS="~amd64"
+KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
 HOMEPAGE="http://www.palemoon.org"
 
