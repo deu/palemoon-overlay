@@ -15,7 +15,7 @@ SRC_URI="
 HOMEPAGE="https://www.palemoon.org/"
 RESTRICT="strip mirror"
 
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~x86 ~amd64"
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="startup-notification"
