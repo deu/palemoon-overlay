@@ -4,7 +4,7 @@
 
 EAPI=5
 
-inherit eutils multilib pax-utils fdo-mime gnome2-utils nsplugins
+inherit palemoon-bin-0 eutils multilib pax-utils fdo-mime gnome2-utils
 
 MOZ_PN="${PN/-bin/}"
 DESCRIPTION="Pale Moon Web Browser"
@@ -65,30 +65,30 @@ src_install() {
 	icon="${PN}"
 	name="Pale Moon"
 
-	# Install icons and .desktop for menu entry
+	# Install icons and .desktop for menu entry:
 	for size in ${sizes}; do
 		insinto "/usr/share/icons/hicolor/${size}x${size}/apps"
 		newins "${icon_path}/default${size}.png" "${icon}.png" || die
 	done
-	# The 128x128 icon has a different name
+	# The 128x128 icon has a different name:
 	insinto /usr/share/icons/hicolor/128x128/apps
 	newins "${icon_path}/../../../icons/mozicon128.png" "${icon}.png" || die
-	# Install a 48x48 icon into /usr/share/pixmaps for legacy DEs
+	# Install a 48x48 icon into /usr/share/pixmaps for legacy DEs:
 	newicon "${S}"/browser/chrome/icons/default/default48.png ${PN}.png
 	domenu "${FILESDIR}"/icon/${PN}.desktop
 	sed -i -e "s:@NAME@:${name}:" -e "s:@ICON@:${icon}:" \
 		"${ED}usr/share/applications/${PN}.desktop" || die
 
-	# Add StartupNotify=true bug 237317
+	# Add StartupNotify=true bug 237317:
 	if use startup-notification; then
 		echo "StartupNotify=true" >> "${ED}"usr/share/applications/${PN}.desktop
 	fi
 
-	# Install palemoon in /opt
+	# Install palemoon in /opt:
 	dodir ${MOZILLA_FIVE_HOME%/*}
 	mv "${S}" "${ED}"${MOZILLA_FIVE_HOME} || die
 
-	# Create /usr/bin/palemoon-bin
+	# Create /usr/bin/palemoon-bin:
 	dodir /usr/bin/
 	cat <<-EOF >"${ED}"usr/bin/${PN}
 	#!/bin/sh
@@ -99,28 +99,14 @@ src_install() {
 	EOF
 	fperms 0755 /usr/bin/${PN}
 
-	# revdep-rebuild entry
+	# revdep-rebuild entry:
 	insinto /etc/revdep-rebuild
 	echo "SEARCH_DIRS_MASK=${MOZILLA_FIVE_HOME}" >> ${T}/10${PN}
 	doins "${T}"/10${PN} || die
 
-	# Plugins dir
-	share_plugins_dir
+	# Plugins dir:
+	dosym "/usr/$(get_libdir)/nsbrowser/plugins" "${MOZILLA_FIVE_HOME}/browser/plugins"
 
-	# Required in order to use plugins and even run palemoon on hardened.
+	# Required in order to use plugins and even run palemoon on hardened:
 	pax-mark mr "${ED}"${MOZILLA_FIVE_HOME}/{palemoon,palemoon-bin,plugin-container}
-}
-
-pkg_preinst() {
-	gnome2_icon_savelist
-}
-
-pkg_postinst() {
-	# Update mimedb for the new .desktop file
-	fdo-mime_desktop_database_update
-	gnome2_icon_cache_update
-}
-
-pkg_postrm() {
-	gnome2_icon_cache_update
 }
