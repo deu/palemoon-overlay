@@ -15,7 +15,7 @@ MOZ_FTP_URI="http://relmirror.palemoon.org"
 
 REQUIRED_BUILDSPACE='12G'
 
-inherit palemoon-0 eutils flag-o-matic multilib mozlinguas
+inherit palemoon-0 eutils flag-o-matic multilib mozlinguas pax-utils
 
 KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
@@ -155,6 +155,9 @@ src_install() {
 	local obj_dir="$(echo */config.log)"
 	obj_dir="${obj_dir%/*}"
 
+	# Disable MRPOTECT for startup cache creation
+	pax-mark m "${obj_dir}"/dist/bin/xpcshell
+
 	load_default_prefs
 	set_pref "spellchecker.dictionary_path" "${EPREFIX}/usr/share/myspell"
 
@@ -174,6 +177,10 @@ src_install() {
 	cp -rL "${P}" "${D}/${dest_libdir}"
 	dosym "${dest_libdir}/${P}/${PN}" "/usr/bin/${PN}"
 	einfo "Done installing the package."
+
+	# Until JIT-less builds are supported,
+	# also disable MPROTECT on the main executable
+	pax-mark m "${D}/${dest_libdir}/${P}/"{palemoon,palemoon-bin,plugin-container}
 
 	# Install language packs:
 	MOZILLA_FIVE_HOME="${dest_libdir}/${P}/browser"
