@@ -23,7 +23,7 @@ HOMEPAGE="http://www.palemoon.org"
 
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
-IUSE="+official-branding +optimize system-libs alsa oss"
+IUSE="+official-branding +optimize system-libs alsa oss pulseaudio"
 
 SRC_URI="${SRC_URI} ftp://source:get@ftp.palemoon.org/${P}-source.7z"
 
@@ -50,6 +50,9 @@ RDEPEND="
 	>=sys-devel/autoconf-2.13:2.1
 	optimize? (
 		>=sys-libs/glibc-2.4
+	)
+	pulseaudio? (
+		media-sound/pulseaudio
 	)
 	system-libs? (
 		>=dev-libs/nspr-4.10.8
@@ -110,6 +113,10 @@ src_configure() {
 		mozconfig_enable optimize=\"-O2\" shared-js
 	else
 		mozconfig_disable optimize
+	fi
+
+	if use pulseaudio; then
+		mozconfig_enable pulseaudio
 	fi
 
 	if use official-branding; then
