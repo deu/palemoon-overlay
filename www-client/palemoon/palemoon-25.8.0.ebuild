@@ -71,7 +71,7 @@ RDEPEND="
 	# still not in the official portage repository, so emerging this with
 	# USE="system-libs" is probably not going to work.
 
-REQUIRED_USE="^^ ( alsa oss )"
+REQUIRED_USE="^^ ( alsa oss pulseaudio )"
 
 src_unpack() {
 	mkdir -p "${S}"
@@ -115,10 +115,6 @@ src_configure() {
 		mozconfig_disable optimize
 	fi
 
-	if use pulseaudio; then
-		mozconfig_enable pulseaudio
-	fi
-
 	if use official-branding; then
 		official-branding_warning
 		mozconfig_enable official-branding
@@ -132,6 +128,10 @@ src_configure() {
 
 	if use oss; then
 		mozconfig_enable oss
+	fi
+
+	if use pulseaudio; then
+		mozconfig_enable pulseaudio
 	fi
 
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
