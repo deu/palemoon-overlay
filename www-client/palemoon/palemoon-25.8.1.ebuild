@@ -55,14 +55,14 @@ RDEPEND="
 		media-sound/pulseaudio
 	)
 	system-libs? (
-		>=dev-libs/nspr-4.10.8
+		>=dev-libs/nspr-4.10.10
 		dev-libs/libevent
-		>=dev-libs/nss-3.19
+		>=dev-libs/nss-3.19.4
 		virtual/jpeg
 		sys-libs/zlib
 		app-arch/bzip2
 		media-libs/libpng[apng]
-		>=media-libs/libvpx-1.0.0
+		>=media-libs/libvpx-1.4.0
 		>=app-text/hunspell-1.3
 		>=virtual/libffi-3.0.9
 		>=dev-db/sqlite-3.8.11.1[secure-delete]
