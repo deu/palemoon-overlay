@@ -1,16 +1,13 @@
-# Copyright 1999-2015 Gentoo Foundation
+# Copyright 1999-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
 EAPI=5
 
 # For mozlinguas:
-MOZ_LANGS=( ach af ak ar as ast be bg bn-BD bn-IN br bs ca cs csb cy da de
-el en-GB en-ZA eo es-AR es-CL es-ES es-MX et eu fa ff fi fr fy-NL ga-IE
-gd gl-ES gu-IN he hi-IN hr hu hy-AM id is it ja kk km kn ko ku lg lij lt lv
-mai mk ml mn mr nb-NO nl nn-NO nso or pa-IN pl pt-BR pt-PT rm ro ru si sk sl
-son sq sr sv-SE sw ta ta-LK te th tr uk vi zh-CN zh-TW zu )
-MOZ_LANGPACK_PREFIX="langpacks/25.x/"
+MOZ_LANGS=( ar cs da de el en-GB es-AR es-ES es-MX fi fr gl-ES hr hu is it ja
+kn ko nl pl pt-BR pt-PT ro ru sk sl sr sv-SE tr vi zh-CN zh-TW )
+MOZ_LANGPACK_PREFIX="langpacks/26.x/"
 MOZ_FTP_URI="http://relmirror.palemoon.org"
 
 REQUIRED_BUILDSPACE='12G'
@@ -23,7 +20,9 @@ HOMEPAGE="http://www.palemoon.org"
 
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
-IUSE="+official-branding +optimize system-libs alsa oss pulseaudio"
+IUSE="+official-branding +optimize -system-libs
+	+gtk2 -gtk3
+	alsa oss pulseaudio"
 
 SRC_URI="${SRC_URI} ftp://source:get@ftp.palemoon.org/${P}-source.7z"
 
@@ -31,8 +30,8 @@ DEPEND="
 	app-arch/p7zip"
 
 RDEPEND="
+	>=sys-devel/autoconf-2.13:2.1
 	>=dev-lang/perl-5.6
-	>=x11-libs/gtk+-2.10
 	x11-libs/libXt
 	>=dev-libs/libIDL-0.6.3
 	>=app-arch/zip-2.3
@@ -43,35 +42,43 @@ RDEPEND="
 	virtual/pkgconfig
 	>=sys-apps/dbus-0.60
 	>=dev-libs/dbus-glib-0.60
-	media-libs/alsa-lib
-	x11-libs/libnotify
 	>=dev-lang/yasm-1.1.0
 	>=dev-lang/python-2.7.3:2.7
-	>=sys-devel/autoconf-2.13:2.1
-	optimize? (
-		>=sys-libs/glibc-2.4
-	)
-	pulseaudio? (
-		media-sound/pulseaudio
-	)
+
+	optimize? ( >=sys-libs/glibc-2.4 )
+
+	gtk2? ( >=x11-libs/gtk+-2.10:2 )
+	gtk3? ( >=x11-libs/gtk+-3.0.0:3 )
+
+	alsa? ( media-libs/alsa-lib )
+	oss? ( media-sound/oss )
+	pulseaudio? ( media-sound/pulseaudio )
+
 	system-libs? (
-		>=dev-libs/nspr-4.10.8
+		dev-python/ply
+		>=dev-libs/nspr-4.10.10
 		dev-libs/libevent
-		>=dev-libs/nss-3.19
-		virtual/jpeg
+		>=dev-libs/nss-3.19.4
+		media-libs/libjpeg-turbo
 		sys-libs/zlib
 		app-arch/bzip2
+		media-libs/libwebp
 		media-libs/libpng[apng]
-		>=media-libs/libvpx-1.0.0
-		>=app-text/hunspell-1.3
-		>=virtual/libffi-3.0.9
+		>=media-libs/libvpx-1.4.0
+
+		x11-libs/cairo
+		x11-libs/pixman
+		app-text/hunspell
+		>=virtual/libffi-3.0.10
 		>=dev-db/sqlite-3.8.11.1[secure-delete]
 	)"
 	# Note: As I'm writing this (2015-08-27) dev-db/sqlite-3.8.11.1 is
 	# still not in the official portage repository, so emerging this with
 	# USE="system-libs" is probably not going to work.
 
-REQUIRED_USE="^^ ( alsa oss pulseaudio )"
+REQUIRED_USE="
+	|| ( gtk2 gtk3 )
+	^^ ( alsa oss pulseaudio )"
 
 src_unpack() {
 	mkdir -p "${S}"
@@ -103,8 +110,7 @@ src_configure() {
 	# Basic configuration:
 	mozconfig_init
 
-	mozconfig_disable crashreporter accessibility parental-controls \
-		maintenance-service webrtc install-strip
+	mozconfig_disable accessibility parental-controls webrtc install-strip
 
 	# Not used and unmaintained. Build fails with them enabled (the default):
 	mozconfig_disable tests
@@ -121,17 +127,23 @@ src_configure() {
 	fi
 
 	if use system-libs; then
-		mozconfig_with system-nspr system-libevent system-nss system-jpeg \
-			system-zlib system-bz2 system-png system-libvpx
-		mozconfig_enable system-hunspell system-ffi system-sqlite
+		mozconfig_with system-ply system-nspr system-libevent system-nss \
+			system-jpeg system-zlib system-bz2 system-webp system-png \
+			system-libvpx
+		mozconfig_enable system-hunspell system-ffi system-sqlite \
+			system-cairo system-pixman
+	fi
+
+	if use alsa; then
+		mozconfig_enable alsa
 	fi
 
 	if use oss; then
 		mozconfig_enable oss
 	fi
 
-	if use pulseaudio; then
-		mozconfig_enable pulseaudio
+	if ! use pulseaudio; then
+		mozconfig_disable pulseaudio
 	fi
 
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
