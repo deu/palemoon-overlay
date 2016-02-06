@@ -188,19 +188,18 @@ src_install() {
 	einfo "Extracting the package..."
 	tar xjpf "${S}/${obj_dir}/dist/${P}.en-US.linux-${CTARGET_default%%-*}.tar.bz2"
 	einfo "Installing the package..."
-	mv "${PN}" "${P}"
 	local dest_libdir="/usr/$(get_libdir)"
 	mkdir -p "${D}/${dest_libdir}"
-	cp -rL "${P}" "${D}/${dest_libdir}"
-	dosym "${dest_libdir}/${P}/${PN}" "/usr/bin/${PN}"
+	cp -rL "${PN}" "${D}/${dest_libdir}"
+	dosym "${dest_libdir}/${PN}/${PN}" "/usr/bin/${PN}"
 	einfo "Done installing the package."
 
 	# Until JIT-less builds are supported,
 	# also disable MPROTECT on the main executable:
-	pax-mark m "${D}/${dest_libdir}/${P}/"{palemoon,palemoon-bin,plugin-container}
+	pax-mark m "${D}/${dest_libdir}/${PN}/"{palemoon,palemoon-bin,plugin-container}
 
 	# Install language packs:
-	MOZILLA_FIVE_HOME="${dest_libdir}/${P}/browser"
+	MOZILLA_FIVE_HOME="${dest_libdir}/${PN}/browser"
 	mozlinguas_src_install
 
 	# Install icons and .desktop for menu entry:
