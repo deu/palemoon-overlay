@@ -70,9 +70,6 @@ RDEPEND="
 		>=virtual/libffi-3.0.10
 		>=dev-db/sqlite-3.8.11.1[secure-delete]
 	)"
-	# Note: As I'm writing this (2015-08-27) dev-db/sqlite-3.8.11.1 is
-	# still not in the official portage repository, so emerging this with
-	# USE="system-libs" is probably not going to work.
 
 REQUIRED_USE="
 	|| ( gtk2 gtk3 )
