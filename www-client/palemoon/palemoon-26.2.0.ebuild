@@ -1,8 +1,8 @@
 # Copyright 1999-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
+# $Id$
 
-EAPI=5
+EAPI=6
 
 # For mozlinguas:
 MOZ_LANGS=( ar cs da de el en-GB es-AR es-ES es-MX fi fr gl-ES hr hu is it ja
@@ -12,22 +12,19 @@ MOZ_FTP_URI="http://relmirror.palemoon.org"
 
 REQUIRED_BUILDSPACE='12G'
 
-inherit palemoon-0 eutils flag-o-matic multilib mozlinguas pax-utils
+inherit palemoon-0 eutils flag-o-matic mozlinguas pax-utils
 
 KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
-HOMEPAGE="http://www.palemoon.org"
+HOMEPAGE="https://www.palemoon.org/"
 
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
-IUSE="+official-branding +optimize -system-libs
-	+gtk2 -gtk3
-	alsa oss pulseaudio"
+IUSE="+official-branding -system-libs +optimize shared-js jemalloc
+	dbus -necko-wifi +gtk2 -gtk3 +gstreamer alsa oss pulseaudio"
 
-SRC_URI="${SRC_URI} ftp://source:get@ftp.palemoon.org/${P}-source.7z"
-
-DEPEND="
-	app-arch/p7zip"
+SRC_URI="${SRC_URI}
+	https://github.com/MoonchildProductions/Pale-Moon/archive/${PV}_Release.tar.gz -> ${P}.tar.gz"
 
 RDEPEND="
 	>=sys-devel/autoconf-2.13:2.1
@@ -37,28 +34,14 @@ RDEPEND="
 	>=app-arch/zip-2.3
 	>=media-libs/freetype-2.1.0
 	media-libs/fontconfig
-	>=media-libs/gstreamer-0.10.25:0.10
-	>=media-libs/gst-plugins-base-0.10:0.10
 	virtual/pkgconfig
-	>=sys-apps/dbus-0.60
-	>=dev-libs/dbus-glib-0.60
+
 	>=dev-lang/yasm-1.1.0
 	>=dev-lang/python-2.7.3:2.7
 
-	optimize? ( >=sys-libs/glibc-2.4 )
-
-	gtk2? ( >=x11-libs/gtk+-2.10:2 )
-	gtk3? ( >=x11-libs/gtk+-3.0.0:3 )
-
-	alsa? ( media-libs/alsa-lib )
-	oss? ( media-sound/oss )
-	pulseaudio? ( media-sound/pulseaudio )
-
 	system-libs? (
 		dev-python/ply
-		>=dev-libs/nspr-4.10.10
 		dev-libs/libevent
-		>=dev-libs/nss-3.19.4
 		media-libs/libjpeg-turbo
 		sys-libs/zlib
 		app-arch/bzip2
@@ -71,22 +54,38 @@ RDEPEND="
 		app-text/hunspell
 		>=virtual/libffi-3.0.10
 		>=dev-db/sqlite-3.8.11.1[secure-delete]
-	)"
-	# Note: As I'm writing this (2015-08-27) dev-db/sqlite-3.8.11.1 is
-	# still not in the official portage repository, so emerging this with
-	# USE="system-libs" is probably not going to work.
+	)
+
+	optimize? ( >=sys-libs/glibc-2.4 )
+
+	dbus? (
+		>=sys-apps/dbus-0.60
+		>=dev-libs/dbus-glib-0.60
+	)
+
+	gtk2? ( >=x11-libs/gtk+-2.10:2 )
+	gtk3? ( >=x11-libs/gtk+-3.0.0:3 )
+
+	gstreamer? (
+		media-libs/gstreamer:1.0
+		media-libs/gst-plugins-base:1.0
+	)
+
+	alsa? ( media-libs/alsa-lib )
+	oss? ( media-sound/oss )
+	pulseaudio? ( media-sound/pulseaudio )
+
+	necko-wifi? ( net-wireless/wireless-tools )"
 
 REQUIRED_USE="
 	|| ( gtk2 gtk3 )
-	^^ ( alsa oss pulseaudio )"
+	^^ ( alsa oss pulseaudio )
+	necko-wifi? ( dbus )"
 
 src_unpack() {
-	mkdir -p "${S}"
-	cd "${S}"
 	unpack ${A}
-
-	#HACK :-(
-	chmod -R 777 .
+	mv Pale-Moon-${PV}_Release ${S}
+	chown -R go-w .
 
 	# Unpack language packs:
 	cd "${WORKDIR}"
@@ -94,9 +93,6 @@ src_unpack() {
 }
 
 src_prepare() {
-	# Allow users to apply any additional patches without modifing the ebuild:
-	epatch_user
-
 	# Ensure that our plugins dir is enabled by default:
 	sed -i -e "s:/usr/lib/mozilla/plugins:/usr/lib/nsbrowser/plugins:" \
 		"${S}/xpcom/io/nsAppFileLocationProvider.cpp" \
@@ -104,6 +100,9 @@ src_prepare() {
 	sed -i -e "s:/usr/lib64/mozilla/plugins:/usr/lib64/nsbrowser/plugins:" \
 		"${S}/xpcom/io/nsAppFileLocationProvider.cpp" \
 		|| die "sed failed to replace plugin path for 64bit!"
+
+	# Allow users to apply any additional patches without modifing the ebuild:
+	eapply_user
 }
 
 src_configure() {
@@ -115,51 +114,48 @@ src_configure() {
 	# Not used and unmaintained. Build fails with them enabled (the default):
 	mozconfig_disable tests
 
-	if use optimize; then
-		mozconfig_enable optimize=\"-O2\" shared-js
-	else
-		mozconfig_disable optimize
-	fi
-
-	if use official-branding; then
-		official-branding_warning
-		mozconfig_enable official-branding
-	fi
-
 	if use system-libs; then
-		mozconfig_with system-ply system-nspr system-libevent system-nss \
+		mozconfig_with system-ply system-libevent \
 			system-jpeg system-zlib system-bz2 system-webp system-png \
 			system-libvpx
 		mozconfig_enable system-hunspell system-ffi system-sqlite \
 			system-cairo system-pixman
 	fi
 
-	if use alsa; then
-		mozconfig_enable alsa
+	if use optimize; then
+		O=$(get-flag '-O*')
+		mozconfig_enable optimize=\"$O\"
+		filter-flags '-O*'
+	else
+		mozconfig_disable optimize
 	fi
 
-	if use oss; then
-		mozconfig_enable oss
+	if use shared-js; then mozconfig_enable shared-js; fi
+	if use jemalloc;  then mozconfig_enable jemalloc; fi
+
+	if ! use dbus; then mozconfig_disable dbus; fi
+
+	if use gstreamer; then
+		mozconfig_enable gstreamer=\"1.0\"
+	else
+		mozconfig_disable gstreamer
 	fi
 
-	if ! use pulseaudio; then
-		mozconfig_disable pulseaudio
+	if   use alsa;       then mozconfig_enable alsa; fi
+	if   use oss;        then mozconfig_enable oss; fi
+	if ! use pulseaudio; then mozconfig_disable pulseaudio; fi
+
+	if ! use necko-wifi; then mozconfig_disable necko-wifi; fi
+
+	if use official-branding; then
+		official-branding_warning
+		mozconfig_enable official-branding
 	fi
 
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
 	mozconfig_var PYTHON $(which python2)
 	mozconfig_var AUTOCONF $(which autoconf-2.13)
 	mozconfig_var MOZ_MAKE_FLAGS "${MAKEOPTS}"
-
-	filter-flags '-O*'
-
-	if [[ $(gcc-major-version) -lt 4 ]]; then
-		append-cxxflags -fno-stack-protector
-	elif [[ $(gcc-major-version) -gt 4 || $(gcc-minor-version) -gt 3 ]]; then
-		if use amd64 || use x86; then
-			append-flags -mno-avx
-		fi
-	fi
 
 	python2 mach # Run it once to create the state directory.
 	python2 mach configure || die
@@ -190,19 +186,18 @@ src_install() {
 	einfo "Extracting the package..."
 	tar xjpf "${S}/${obj_dir}/dist/${P}.en-US.linux-${CTARGET_default%%-*}.tar.bz2"
 	einfo "Installing the package..."
-	mv "${PN}" "${P}"
 	local dest_libdir="/usr/$(get_libdir)"
 	mkdir -p "${D}/${dest_libdir}"
-	cp -rL "${P}" "${D}/${dest_libdir}"
-	dosym "${dest_libdir}/${P}/${PN}" "/usr/bin/${PN}"
+	cp -rL "${PN}" "${D}/${dest_libdir}"
+	dosym "${dest_libdir}/${PN}/${PN}" "/usr/bin/${PN}"
 	einfo "Done installing the package."
 
 	# Until JIT-less builds are supported,
 	# also disable MPROTECT on the main executable:
-	pax-mark m "${D}/${dest_libdir}/${P}/"{palemoon,palemoon-bin,plugin-container}
+	pax-mark m "${D}/${dest_libdir}/${PN}/"{palemoon,palemoon-bin,plugin-container}
 
 	# Install language packs:
-	MOZILLA_FIVE_HOME="${dest_libdir}/${P}/browser"
+	MOZILLA_FIVE_HOME="${dest_libdir}/${PN}/browser"
 	mozlinguas_src_install
 
 	# Install icons and .desktop for menu entry:
