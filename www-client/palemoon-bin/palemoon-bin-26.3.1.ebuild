@@ -1,36 +1,36 @@
 # Copyright 1999-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
+# $Id$
 
-EAPI=5
+EAPI=6
 
-inherit palemoon-bin-0 eutils multilib pax-utils fdo-mime gnome2-utils
-
-MOZ_PN="${PN/-bin/}"
-DESCRIPTION="Pale Moon Web Browser"
-HOMEPAGE="https://www.palemoon.org/"
-SRC_URI="
-	amd64? ( http://linux.palemoon.org/files/${PV}/${MOZ_PN}-${PV}.en-US.linux-x86_64.tar.bz2 )
-	x86? ( http://linux.palemoon.org/files/${PV}/${MOZ_PN}-${PV}.en-US.linux-i686.tar.bz2 )"
-HOMEPAGE="https://www.palemoon.org/"
-RESTRICT="strip mirror"
+inherit palemoon-bin-0 eutils pax-utils fdo-mime gnome2-utils
 
 KEYWORDS="~x86 ~amd64"
+DESCRIPTION="Pale Moon Web Browser"
+HOMEPAGE="https://www.palemoon.org/"
+
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="startup-notification"
 
-DEPEND="app-arch/tar"
-RDEPEND="dev-libs/atk
+MOZ_PN="${PN/-bin/}"
+RESTRICT="strip mirror"
+SRC_URI="
+	amd64? ( https://linux.palemoon.org/files/${PV}/${MOZ_PN}-${PV}.en-US.linux-x86_64.tar.bz2 )
+	x86? ( https://linux.palemoon.org/files/${PV}/${MOZ_PN}-${PV}.en-US.linux-i686.tar.bz2 )"
+RESTRICT="mirror"
+
+RDEPEND="
+	dev-libs/atk
 	>=sys-apps/dbus-0.60
-	>=dev-libs/dbus-glib-0.72
-	>=dev-libs/glib-2.26:2
-	>=media-libs/alsa-lib-1.0.16
+	>=dev-libs/dbus-glib-0.60
+	media-libs/alsa-lib
 	media-libs/fontconfig
-	>=media-libs/freetype-2.4.10
-	>=x11-libs/cairo-1.10[X]
+	>=media-libs/freetype-2.1.0
+	x11-libs/cairo
 	x11-libs/gdk-pixbuf
-	>=x11-libs/gtk+-2.18:2
+	>=x11-libs/gtk+-2.10:2
 	x11-libs/libX11
 	x11-libs/libXcomposite
 	x11-libs/libXdamage
@@ -38,7 +38,7 @@ RDEPEND="dev-libs/atk
 	x11-libs/libXfixes
 	x11-libs/libXrender
 	x11-libs/libXt
-	>=x11-libs/pango-1.22.0
+	x11-libs/pango
 	virtual/freedesktop-icon-theme
 "
 
