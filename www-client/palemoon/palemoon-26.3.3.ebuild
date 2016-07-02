@@ -9,10 +9,11 @@ MOZ_LANGS=( ar cs da de el en-GB es-AR es-ES es-MX fi fr gl-ES hr hu is it ja
 kn ko nl pl pt-BR pt-PT ro ru sk sl sr sv-SE tr vi zh-CN zh-TW )
 MOZ_LANGPACK_PREFIX="langpacks/26.x/"
 MOZ_FTP_URI="http://relmirror.palemoon.org"
+RESTRICT="mirror"
 
 REQUIRED_BUILDSPACE='12G'
 
-inherit palemoon-0 eutils flag-o-matic mozlinguas pax-utils
+inherit palemoon-0 git-r3 eutils flag-o-matic mozlinguas pax-utils
 
 KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
@@ -23,8 +24,8 @@ LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="+official-branding -system-libs +optimize shared-js jemalloc
 	dbus -necko-wifi +gtk2 -gtk3 +gstreamer alsa oss pulseaudio"
 
-SRC_URI="${SRC_URI}
-	https://github.com/MoonchildProductions/Pale-Moon/archive/${PV}_Release.tar.gz -> ${P}.tar.gz"
+EGIT_REPO_URI="git://github.com/MoonchildProductions/Pale-Moon.git"
+GIT_TAG="${PV}_Release"
 
 RDEPEND="
 	>=sys-devel/autoconf-2.13:2.1
@@ -83,9 +84,8 @@ REQUIRED_USE="
 	necko-wifi? ( dbus )"
 
 src_unpack() {
-	unpack ${A}
-	mv Pale-Moon-${PV}_Release ${S}
-	chown -R go-w .
+	git-r3_fetch ${EGIT_REPO_URI} refs/tags/${GIT_TAG}
+	git-r3_checkout
 
 	# Unpack language packs:
 	cd "${WORKDIR}"
@@ -131,7 +131,9 @@ src_configure() {
 	fi
 
 	if use shared-js; then mozconfig_enable shared-js; fi
-	if use jemalloc;  then mozconfig_enable jemalloc; fi
+	if use jemalloc; then
+		mozconfig_enable jemalloc jemalloc-lib
+	fi
 
 	if ! use dbus; then mozconfig_disable dbus; fi
 
