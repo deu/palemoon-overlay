@@ -21,7 +21,7 @@ HOMEPAGE="https://www.palemoon.org/"
 
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
-IUSE="+official-branding -system-libs +optimize shared-js jemalloc
+IUSE="+official-branding -system-libs +optimize shared-js jemalloc -valgrind
 	dbus -necko-wifi +gtk2 -gtk3 +gstreamer alsa oss pulseaudio"
 
 EGIT_REPO_URI="git://github.com/MoonchildProductions/Pale-Moon.git"
@@ -59,6 +59,8 @@ RDEPEND="
 
 	optimize? ( >=sys-libs/glibc-2.4 )
 
+	valgrind? ( dev-util/valgrind )
+
 	dbus? (
 		>=sys-apps/dbus-0.60
 		>=dev-libs/dbus-glib-0.60
@@ -79,6 +81,7 @@ RDEPEND="
 	necko-wifi? ( net-wireless/wireless-tools )"
 
 REQUIRED_USE="
+	jemalloc? ( !valgrind )
 	|| ( gtk2 gtk3 )
 	^^ ( alsa oss pulseaudio )
 	necko-wifi? ( dbus )"
@@ -133,6 +136,11 @@ src_configure() {
 	if use shared-js; then mozconfig_enable shared-js; fi
 	if use jemalloc; then
 		mozconfig_enable jemalloc jemalloc-lib
+	fi
+	if use valgrind; then
+		mozconfig_enable valgrind
+	else
+		mozconfig_disable valgrind
 	fi
 
 	if ! use dbus; then mozconfig_disable dbus; fi
