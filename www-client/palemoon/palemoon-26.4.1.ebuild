@@ -9,10 +9,11 @@ MOZ_LANGS=( ar cs da de el en-GB es-AR es-ES es-MX fi fr gl-ES hr hu is it ja
 kn ko nl pl pt-BR pt-PT ro ru sk sl sr sv-SE tr vi zh-CN zh-TW )
 MOZ_LANGPACK_PREFIX="langpacks/26.x/"
 MOZ_FTP_URI="http://relmirror.palemoon.org"
+RESTRICT="mirror"
 
 REQUIRED_BUILDSPACE='12G'
 
-inherit palemoon-0 eutils flag-o-matic mozlinguas pax-utils
+inherit palemoon-0 git-r3 eutils flag-o-matic mozlinguas pax-utils
 
 KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
@@ -20,12 +21,12 @@ HOMEPAGE="https://www.palemoon.org/"
 
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
-IUSE="+official-branding -system-libs +optimize shared-js jemalloc
-	dbus -necko-wifi +gtk2 -gtk3 +gstreamer alsa oss pulseaudio"
+IUSE="+official-branding -system-libs +optimize shared-js jemalloc -valgrind
+	dbus -necko-wifi +gtk2 -gtk3 +gstreamer gstreamer1_0
+	alsa oss pulseaudio"
 
-SRC_URI="${SRC_URI}
-	https://github.com/MoonchildProductions/Pale-Moon/archive/${PV}_Release.tar.gz -> ${P}.tar.gz"
-RESTRICT="mirror"
+EGIT_REPO_URI="git://github.com/MoonchildProductions/Pale-Moon.git"
+GIT_TAG="${PV}_Release"
 
 RDEPEND="
 	>=sys-devel/autoconf-2.13:2.1
@@ -54,10 +55,12 @@ RDEPEND="
 		x11-libs/pixman
 		app-text/hunspell
 		>=virtual/libffi-3.0.10
-		>=dev-db/sqlite-3.8.11.1[secure-delete]
+		>=dev-db/sqlite-3.13.0[secure-delete]
 	)
 
 	optimize? ( >=sys-libs/glibc-2.4 )
+
+	valgrind? ( dev-util/valgrind )
 
 	dbus? (
 		>=sys-apps/dbus-0.60
@@ -68,6 +71,10 @@ RDEPEND="
 	gtk3? ( >=x11-libs/gtk+-3.0.0:3 )
 
 	gstreamer? (
+		media-libs/gstreamer:0.10
+		media-libs/gst-plugins-base:0.10
+	)
+	gstreamer1_0? (
 		media-libs/gstreamer:1.0
 		media-libs/gst-plugins-base:1.0
 	)
@@ -79,14 +86,15 @@ RDEPEND="
 	necko-wifi? ( net-wireless/wireless-tools )"
 
 REQUIRED_USE="
+	jemalloc? ( !valgrind )
 	|| ( gtk2 gtk3 )
+	gstreamer1_0? ( !gstreamer )
 	^^ ( alsa oss pulseaudio )
 	necko-wifi? ( dbus )"
 
 src_unpack() {
-	unpack ${A}
-	mv Pale-Moon-${PV}_Release ${S}
-	chown -R go-w .
+	git-r3_fetch ${EGIT_REPO_URI} refs/tags/${GIT_TAG}
+	git-r3_checkout
 
 	# Unpack language packs:
 	cd "${WORKDIR}"
@@ -135,10 +143,17 @@ src_configure() {
 	if use jemalloc; then
 		mozconfig_enable jemalloc jemalloc-lib
 	fi
+	if use valgrind; then
+		mozconfig_enable valgrind
+	else
+		mozconfig_disable valgrind
+	fi
 
 	if ! use dbus; then mozconfig_disable dbus; fi
 
 	if use gstreamer; then
+		mozconfig_enable gstreamer=\"0.10\"
+	elif use gstreamer1_0; then
 		mozconfig_enable gstreamer=\"1.0\"
 	else
 		mozconfig_disable gstreamer
