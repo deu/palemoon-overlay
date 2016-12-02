@@ -176,7 +176,7 @@ src_configure() {
 	mozconfig_var AUTOCONF $(which autoconf-2.13)
 	mozconfig_var MOZ_MAKE_FLAGS "${MAKEOPTS}"
 	# Disable mach notifications, which also cause sandbox access violations:
-	mozconfig_var NOSPAM 1
+	export MOZ_NOSPAM=1
 
 	python2 mach # Run it once to create the state directory.
 	python2 mach configure || die
