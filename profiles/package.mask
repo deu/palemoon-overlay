@@ -2,3 +2,10 @@
 # badly signed addons.
 # (See: http://forum.palemoon.org/viewtopic.php?t=8047&p=52880)
 <www-client/palemoon-25.3.2
+
+# Pale Moon 27 isn't very mature yet. If you want to give it a try anyway be
+# sure to make a backup of your `~/.moonchild productions` directory, since
+# after the upgrade it won't be compatible with the previous versions
+# any more, in case you'll want to downgrade.
+>=www-client/palemoon-27
+>=www-client/palemoon-bin-27
