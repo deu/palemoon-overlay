@@ -46,7 +46,7 @@ to:
 
 And now issue:
 
-# emerge -tuDN palemoon
+emerge -tuDN palemoon
 
 and the compilation should start.
 
