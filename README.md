@@ -10,15 +10,13 @@ https://github.com/MoonchildProductions/Pale-Moon.git
 
 from even the very latest of the tags/commits at that git repo above!
 
-This very repo, heavily modified (not much in either though) from deu's repo, (this one) is not an overlay per se. Some ideas I hope might be used in the original repo though...
+This very repo, heavily modified from deu's repo, (this one) is not an overlay per se, not for use with layman. But some ideas I hope might be used in the original repo though...
 
-But this one is not an overlay per se. Rather, I deploy it in my /usr/local/portage/ instead.
+Rather, this one for deployment via /usr/local/portage/ instead (as far as I was able to use it).
 
-Go and read the Local_Overlay on Gentoo wiki, if you don't know how to deploy it:
+The requiered prerequisite knowledge is at:
 
 https://wiki.gentoo.org/wiki/Overlay/Local_overlay
-
-The above is the prerequisite knowledge.
 
 Old versions of palemoon and palemoon-bin are there but are unmodified, and I didn't try compiling any of them. No time. Forget about them in this repo.
 
@@ -26,7 +24,9 @@ If you want to try your luck using this (just remember that I'm not familiar yet
 
 If you want to try this, first clone this repo:
 
-git clone https://github.com/miroR/palemoon-overlay
+git clone -b develop https://github.com/miroR/palemoon-overlay
+
+IMPORTANT: you must clone only the develop branch. E.g., if there is the mv_mozextensions-r1.eclass present in the eclass/ directory, it won't compile, and it won't even tell you why... Sorry, I can't yet figure out why...
 
 Then from that local cloned git repo of yours copy the contents of:
 
@@ -50,7 +50,7 @@ emerge -tuDN palemoon
 
 and the compilation should start.
 
-If I don't modify this README.md today, I successfully (re)tried the above procedure and it works (or I couldn't modify it because something prevented me from doing it). The non-parenthesized event it more likely.
+I successfully (re)tried the above procedure and it works for me. ~amd64 I have, and am not advanced with testing different arches at all.
 
 The below is the original content of this README.md, unmodified in any way.
 
