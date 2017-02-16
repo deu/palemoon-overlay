@@ -3,14 +3,9 @@
 # (See: http://forum.palemoon.org/viewtopic.php?t=8047&p=52880)
 <www-client/palemoon-25.3.2
 
-# Pale Moon 27 isn't very mature yet. If you want to give it a try anyway be
-# sure to make a backup of your `~/.moonchild productions` directory, since
-# after the upgrade it won't be compatible with the previous versions
-# any more, in case you'll want to downgrade.
-# Moreover, when built with gcc >=5 Pale Moon is highly unstable, so you are
+# When built with gcc >=5 Pale Moon is highly unstable, so you are
 # prevented from building it if you are on a 5.* profile. You can use
 # gcc-config to change your compiler profile, just remember to change it back
 # afterwards. You need to have the appropriate versions of gcc installed for
 # them to be shown in gcc-config.
 >=www-client/palemoon-27
->=www-client/palemoon-bin-27
