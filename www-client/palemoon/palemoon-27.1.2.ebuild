@@ -1,19 +1,17 @@
-# Copyright 1999-2016 Gentoo Foundation
+# Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
 EAPI=6
 
+REQUIRED_BUILDSPACE='7G'
+
 # For mozlinguas:
-MOZ_LANGS=( ar cs da de el en-GB es-AR es-ES es-MX fi fr gl-ES hr hu is it ja
-kn ko nl pl pt-BR pt-PT ro ru sk sl sr sv-SE tr vi zh-CN zh-TW )
-MOZ_LANGPACK_PREFIX="langpacks/26.x/"
+MOZ_LANGS=( cs de es-AR es-ES es-MX fr hu it ja ko pl ru zh-CN )
+MOZ_LANGPACK_PREFIX="langpacks/27.x/"
 MOZ_FTP_URI="http://relmirror.palemoon.org"
-RESTRICT="mirror"
 
-REQUIRED_BUILDSPACE='12G'
-
-inherit palemoon-0 git-r3 eutils flag-o-matic mozlinguas pax-utils
+inherit palemoon-1 mozlinguas git-r3 eutils flag-o-matic pax-utils
 
 KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
@@ -22,74 +20,70 @@ HOMEPAGE="https://www.palemoon.org/"
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="+official-branding -system-libs +optimize shared-js jemalloc -valgrind
-	dbus -necko-wifi +gtk2 -gtk3 +gstreamer gstreamer1_0
-	alsa oss pulseaudio"
+	dbus -necko-wifi +gtk2 -gtk3 +ffmpeg -gstreamer -webrtc
+	alsa pulseaudio"
 
-EGIT_REPO_URI="git://github.com/MoonchildProductions/Pale-Moon.git"
-GIT_TAG="${PV}_Release_Linux"
+EGIT_REPO_URI="https://github.com/MoonchildProductions/Pale-Moon.git"
+GIT_TAG="${PV}_Release"
+
+DEPEND="
+	>=sys-devel/autoconf-2.13:2.1
+	dev-lang/python:2.7
+	>=dev-lang/perl-5.6
+	dev-lang/yasm"
 
 RDEPEND="
-	>=sys-devel/autoconf-2.13:2.1
-	>=dev-lang/perl-5.6
 	x11-libs/libXt
-	>=dev-libs/libIDL-0.6.3
-	>=app-arch/zip-2.3
-	>=media-libs/freetype-2.1.0
+	app-arch/zip
+	media-libs/freetype
 	media-libs/fontconfig
-	virtual/pkgconfig
-
-	>=dev-lang/yasm-1.1.0
-	>=dev-lang/python-2.7.3:2.7
 
 	system-libs? (
-		dev-python/ply
 		dev-libs/libevent
 		media-libs/libjpeg-turbo
 		sys-libs/zlib
 		app-arch/bzip2
 		media-libs/libwebp
 		media-libs/libpng[apng]
+		app-text/hunspell
 		>=media-libs/libvpx-1.4.0
-
+		>=dev-db/sqlite-3.13.0[secure-delete]
 		x11-libs/cairo
 		x11-libs/pixman
-		app-text/hunspell
-		>=virtual/libffi-3.0.10
-		>=dev-db/sqlite-3.13.0[secure-delete]
 	)
 
-	optimize? ( >=sys-libs/glibc-2.4 )
+	optimize? ( sys-libs/glibc )
 
 	valgrind? ( dev-util/valgrind )
+
+	shared-js? ( virtual/libffi )
 
 	dbus? (
 		>=sys-apps/dbus-0.60
 		>=dev-libs/dbus-glib-0.60
 	)
 
-	gtk2? ( >=x11-libs/gtk+-2.10:2 )
-	gtk3? ( >=x11-libs/gtk+-3.0.0:3 )
+	gtk2? ( >=x11-libs/gtk+-2.18.0:2 )
+	gtk3? ( >=x11-libs/gtk+-3.4.0:3 )
+
+	ffmpeg? (
+		virtual/ffmpeg[x264]
+	)
 
 	gstreamer? (
-		media-libs/gstreamer:0.10
-		media-libs/gst-plugins-base:0.10
-	)
-	gstreamer1_0? (
 		media-libs/gstreamer:1.0
 		media-libs/gst-plugins-base:1.0
 	)
 
 	alsa? ( media-libs/alsa-lib )
-	oss? ( media-sound/oss )
 	pulseaudio? ( media-sound/pulseaudio )
 
 	necko-wifi? ( net-wireless/wireless-tools )"
 
 REQUIRED_USE="
 	jemalloc? ( !valgrind )
-	|| ( gtk2 gtk3 )
-	gstreamer1_0? ( !gstreamer )
-	^^ ( alsa oss pulseaudio )
+	^^ ( gtk2 gtk3 )
+	^^ ( alsa pulseaudio )
 	necko-wifi? ( dbus )"
 
 src_unpack() {
@@ -118,17 +112,13 @@ src_configure() {
 	# Basic configuration:
 	mozconfig_init
 
-	mozconfig_disable accessibility parental-controls webrtc install-strip
-
-	# Not used and unmaintained. Build fails with them enabled (the default):
-	mozconfig_disable tests
+	mozconfig_disable updater
 
 	if use system-libs; then
-		mozconfig_with system-ply system-libevent \
-			system-jpeg system-zlib system-bz2 system-webp system-png \
-			system-libvpx
-		mozconfig_enable system-hunspell system-ffi system-sqlite \
-			system-cairo system-pixman
+		mozconfig_with system-libevent system-jpeg system-zlib system-bz2 \
+			system-webp system-png system-libvpx
+		mozconfig_enable system-hunspell system-sqlite system-cairo \
+			system-pixman
 	fi
 
 	if use optimize; then
@@ -139,41 +129,77 @@ src_configure() {
 		mozconfig_disable optimize
 	fi
 
-	if use shared-js; then mozconfig_enable shared-js; fi
+	if use shared-js; then
+		mozconfig_enable shared-js
+	fi
+
 	if use jemalloc; then
 		mozconfig_enable jemalloc jemalloc-lib
 	fi
+
 	if use valgrind; then
 		mozconfig_enable valgrind
 	else
 		mozconfig_disable valgrind
 	fi
 
-	if ! use dbus; then mozconfig_disable dbus; fi
+	if ! use dbus; then
+		mozconfig_disable dbus
+	fi
+
+	if ! use necko-wifi; then
+		mozconfig_disable necko-wifi
+	fi
+
+	if use ffmpeg; then
+		mozconfig_enable ffmpeg
+	else
+		mozconfig_disable ffmpeg
+	fi
 
 	if use gstreamer; then
-		mozconfig_enable gstreamer=\"0.10\"
-	elif use gstreamer1_0; then
-		mozconfig_enable gstreamer=\"1.0\"
+		mozconfig_enable gstreamer
 	else
 		mozconfig_disable gstreamer
 	fi
 
-	if   use alsa;       then mozconfig_enable alsa; fi
-	if   use oss;        then mozconfig_enable oss; fi
-	if ! use pulseaudio; then mozconfig_disable pulseaudio; fi
+	if use webrtc; then
+		mozconfig_enable webrtc
+	else
+		mozconfig_disable webrtc
+	fi
 
-	if ! use necko-wifi; then mozconfig_disable necko-wifi; fi
+	if   use alsa; then
+		mozconfig_enable alsa
+	fi
+
+	if ! use pulseaudio; then
+		mozconfig_disable pulseaudio
+	fi
 
 	if use official-branding; then
 		official-branding_warning
 		mozconfig_enable official-branding
 	fi
 
+	if use gtk2; then
+		mozconfig_enable default-toolkit=\"cairo-gtk2\"
+	fi
+
+	if use gtk3; then
+		mozconfig_enable default-toolkit=\"cairo-gtk3\"
+	fi
+
+	# Mainly to prevent system's NSS/NSPR from taking precedence over
+	# the built-in ones:
+	append-ldflags -Wl,-rpath="$EPREFIX/usr/$(get_libdir)/palemoon"
+
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
 	mozconfig_var PYTHON $(which python2)
 	mozconfig_var AUTOCONF $(which autoconf-2.13)
 	mozconfig_var MOZ_MAKE_FLAGS "${MAKEOPTS}"
+	# Disable mach notifications, which also cause sandbox access violations:
+	export MOZ_NOSPAM=1
 
 	python2 mach # Run it once to create the state directory.
 	python2 mach configure || die
@@ -202,7 +228,7 @@ src_install() {
 	mkdir -p "${extracted_dir}"
 	cd "${extracted_dir}"
 	einfo "Extracting the package..."
-	tar xjpf "${S}/${obj_dir}/dist/${P}.en-US.linux-${CTARGET_default%%-*}.tar.bz2"
+	tar xjpf "${S}/${obj_dir}/dist/${P}.linux-${CTARGET_default%%-*}.tar.bz2"
 	einfo "Installing the package..."
 	local dest_libdir="/usr/$(get_libdir)"
 	mkdir -p "${D}/${dest_libdir}"
