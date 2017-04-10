@@ -44,7 +44,7 @@ RDEPEND="
 		app-arch/bzip2
 		media-libs/libwebp
 		>=media-libs/libvpx-1.4.0
-		>=app-text/hunspell-1.6.0
+		~app-text/hunspell-1.6.0
 		>=dev-db/sqlite-3.13.0[secure-delete]
 	)
 
