@@ -6,7 +6,12 @@ EAPI=6
 
 REQUIRED_BUILDSPACE='7G'
 
-inherit palemoon-1 git-r3 eutils flag-o-matic pax-utils
+# For mozlinguas:
+MOZ_LANGS=( cs de es-AR es-ES es-MX fr hu it ja ko pl ru zh-CN )
+MOZ_LANGPACK_PREFIX="langpacks/27.x/"
+MOZ_FTP_URI="http://relmirror.palemoon.org"
+
+inherit palemoon-1 mozlinguas git-r3 eutils flag-o-matic pax-utils
 
 KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
@@ -15,36 +20,32 @@ HOMEPAGE="https://www.palemoon.org/"
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="+official-branding -system-libs +optimize shared-js jemalloc -valgrind
-	dbus -necko-wifi +gtk2 -gtk3 +gstreamer -webrtc
-	alsa pulseaudio"
+	dbus -necko-wifi +gtk2 -gtk3 -webrtc alsa pulseaudio +devtools"
 
-EGIT_REPO_URI="git://github.com/MoonchildProductions/Pale-Moon.git"
+EGIT_REPO_URI="https://github.com/MoonchildProductions/Pale-Moon.git"
 GIT_TAG="${PV}_Release"
 
-RDEPEND="
+DEPEND="
 	>=sys-devel/autoconf-2.13:2.1
+	dev-lang/python:2.7
 	>=dev-lang/perl-5.6
+	dev-lang/yasm"
+
+RDEPEND="
 	x11-libs/libXt
 	app-arch/zip
 	media-libs/freetype
 	media-libs/fontconfig
-	virtual/pkgconfig
-
-	dev-lang/yasm
-	dev-lang/python:2.7
+	virtual/ffmpeg[x264]
 
 	system-libs? (
 		dev-libs/libevent
-		media-libs/libjpeg-turbo
 		sys-libs/zlib
 		app-arch/bzip2
 		media-libs/libwebp
-		media-libs/libpng[apng]
-		app-text/hunspell
 		>=media-libs/libvpx-1.4.0
+		~app-text/hunspell-1.6.0
 		>=dev-db/sqlite-3.13.0[secure-delete]
-		x11-libs/cairo
-		x11-libs/pixman
 	)
 
 	optimize? ( sys-libs/glibc )
@@ -61,11 +62,6 @@ RDEPEND="
 	gtk2? ( >=x11-libs/gtk+-2.18.0:2 )
 	gtk3? ( >=x11-libs/gtk+-3.4.0:3 )
 
-	gstreamer? (
-		media-libs/gstreamer:1.0
-		media-libs/gst-plugins-base:1.0
-	)
-
 	alsa? ( media-libs/alsa-lib )
 	pulseaudio? ( media-sound/pulseaudio )
 
@@ -80,6 +76,10 @@ REQUIRED_USE="
 src_unpack() {
 	git-r3_fetch ${EGIT_REPO_URI} refs/tags/${GIT_TAG}
 	git-r3_checkout
+
+	# Unpack language packs:
+	cd "${WORKDIR}"
+	mozlinguas_src_unpack
 }
 
 src_prepare() {
@@ -102,10 +102,9 @@ src_configure() {
 	mozconfig_disable updater
 
 	if use system-libs; then
-		mozconfig_with system-libevent system-jpeg system-zlib system-bz2 \
-			system-webp system-png system-libvpx
-		mozconfig_enable system-hunspell system-sqlite system-cairo \
-			system-pixman
+		mozconfig_with system-libevent system-zlib system-bz2 \
+			system-webp system-libvpx
+		mozconfig_enable system-hunspell system-sqlite
 	fi
 
 	if use optimize; then
@@ -138,12 +137,6 @@ src_configure() {
 		mozconfig_disable necko-wifi
 	fi
 
-	if use gstreamer; then
-		mozconfig_enable gstreamer
-	else
-		mozconfig_disable gstreamer
-	fi
-
 	if use webrtc; then
 		mozconfig_enable webrtc
 	else
@@ -171,6 +164,14 @@ src_configure() {
 		mozconfig_enable default-toolkit=\"cairo-gtk3\"
 	fi
 
+	if use devtools; then
+		mozconfig_enable devtools devtools-perf
+	fi
+
+	# Mainly to prevent system's NSS/NSPR from taking precedence over
+	# the built-in ones:
+	append-ldflags -Wl,-rpath="$EPREFIX/usr/$(get_libdir)/palemoon"
+
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
 	mozconfig_var PYTHON $(which python2)
 	mozconfig_var AUTOCONF $(which autoconf-2.13)
@@ -179,7 +180,6 @@ src_configure() {
 	export MOZ_NOSPAM=1
 
 	python2 mach # Run it once to create the state directory.
-	python2 mach configure || die
 }
 
 src_compile() {
@@ -216,6 +216,10 @@ src_install() {
 	# Until JIT-less builds are supported,
 	# also disable MPROTECT on the main executable:
 	pax-mark m "${D}/${dest_libdir}/${PN}/"{palemoon,palemoon-bin,plugin-container}
+
+	# Install language packs:
+	MOZILLA_FIVE_HOME="${dest_libdir}/${PN}/browser"
+	mozlinguas_src_install
 
 	# Install icons and .desktop for menu entry:
 	cp -rL "${S}/${obj_dir}/dist/branding" "${extracted_dir}/"

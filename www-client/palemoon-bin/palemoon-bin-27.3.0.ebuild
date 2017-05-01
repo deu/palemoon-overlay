@@ -17,8 +17,8 @@ IUSE="startup-notification"
 MOZ_PN="${PN/-bin/}"
 RESTRICT="strip mirror"
 SRC_URI="
-	amd64? ( https://linux.palemoon.org/files/${PV}/${MOZ_PN}-${PV}.en-US.linux-x86_64.tar.bz2 )
-	x86? ( https://linux.palemoon.org/files/${PV}/${MOZ_PN}-${PV}.en-US.linux-i686.tar.bz2 )"
+	amd64? ( https://linux.palemoon.org/datastore/release/${MOZ_PN}-${PV}.en-US.linux-x86_64.tar.bz2 )
+	x86? ( https://linux.palemoon.org/datastore/release/${MOZ_PN}-${PV}.en-US.linux-i686.tar.bz2 )"
 
 RDEPEND="
 	dev-libs/atk
@@ -39,6 +39,7 @@ RDEPEND="
 	x11-libs/libXt
 	x11-libs/pango
 	virtual/freedesktop-icon-theme
+	virtual/ffmpeg[x264]
 "
 
 QA_PREBUILT="
@@ -91,12 +92,17 @@ src_install() {
 	dodir /usr/bin/
 	cat <<-EOF >"${ED}"usr/bin/${PN}
 	#!/bin/sh
-	unset LD_PRELOAD
-	LD_LIBRARY_PATH="/opt/palemoon/"
 	GTK_PATH=/usr/lib/gtk-2.0/
 	exec /opt/${MOZ_PN}/${MOZ_PN} "\$@"
 	EOF
 	fperms 0755 /usr/bin/${PN}
+
+	# Mainly to prevent system's NSS/NSPR from taking precedence over
+	# the built-in ones:
+	for elf in $(scanelf -RBF "%F" "${ED}"${MOZILLA_FIVE_HOME}/*); do
+		echo "Patching ELF ${elf}"
+		patchelf --set-rpath "${MOZILLA_FIVE_HOME}" "${elf}"
+	done
 
 	# revdep-rebuild entry:
 	insinto /etc/revdep-rebuild
