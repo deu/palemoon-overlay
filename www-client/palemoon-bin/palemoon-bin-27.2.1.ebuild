@@ -24,6 +24,7 @@ RDEPEND="
 	dev-libs/atk
 	>=sys-apps/dbus-0.60
 	>=dev-libs/dbus-glib-0.60
+	dev-util/patchelf
 	media-libs/alsa-lib
 	media-libs/fontconfig
 	>=media-libs/freetype-2.1.0
