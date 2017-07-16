@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
-# @ECLASS: mozlinguas.eclass
+# @ECLASS: mozlinguas-palemoon.eclass
 # @MAINTAINER:
 # mozilla@gentoo.org
 # @AUTHOR:
@@ -155,12 +155,12 @@ else
 fi
 unset x
 
-# @FUNCTION: mozlinguas_export
+# @FUNCTION: mozlinguas-palemoon_export
 # @INTERNAL
 # @DESCRIPTION:
 # Generate the list of language packs called "mozlinguas"
 # This list is used to unpack and install the xpi language packs
-mozlinguas_export() {
+mozlinguas-palemoon_export() {
 	if [[ ${PN} == seamonkey ]] ; then
 		[[ ${PV} =~ alpha ]] && ! [[ -n ${MOZ_GENERATE_LANGPACKS} ]] && return
 	else
@@ -187,13 +187,13 @@ mozlinguas_export() {
 	done
 }
 
-# @FUNCTION: mozlinguas_src_unpack
+# @FUNCTION: mozlinguas-palemoon_src_unpack
 # @DESCRIPTION:
 # Unpack xpi language packs according to the user's LINGUAS settings
-mozlinguas_src_unpack() {
+mozlinguas-palemoon_src_unpack() {
 	local x
 	if ! [[ -n ${MOZ_GENERATE_LANGPACKS} ]]; then
-		mozlinguas_export
+		mozlinguas-palemoon_export
 		for x in "${mozlinguas[@]}"; do
 			# FIXME: Add support for unpacking xpis to portage
 			xpi_unpack "${MOZ_P}-${x}${MOZ_LANGPACK_UNOFFICIAL:+.unofficial}.xpi"
@@ -204,13 +204,13 @@ mozlinguas_src_unpack() {
 	fi
 }
 
-# @FUNCTION: mozlinguas_mozconfig
+# @FUNCTION: mozlinguas-palemoon_mozconfig
 # @DESCRIPTION:
 # if applicable, add the necessary flag to .mozconfig to support
 # the generation of locales.  Note that this function requires
 # mozconfig_annontate to already be declared via an inherit of
 # mozconfig or mozcoreconf.
-mozlinguas_mozconfig() {
+mozlinguas-palemoon_mozconfig() {
 	if [[ -n ${MOZ_GENERATE_LANGPACKS} ]]; then
 		if declare -f mozconfig_annotate >/dev/null ; then
 			mozconfig_annotate 'for building locales' --with-l10n-base=${MOZ_L10N_SOURCEDIR}
@@ -220,10 +220,10 @@ mozlinguas_mozconfig() {
 	fi
 }
 
-# @FUNCTION: mozlinguas_src_compile
+# @FUNCTION: mozlinguas-palemoon_src_compile
 # @DESCRIPTION:
 # if applicable, build the selected locales.
-mozlinguas_src_compile() {
+mozlinguas-palemoon_src_compile() {
 	if [[ -n ${MOZ_GENERATE_LANGPACKS} ]]; then
 		# leverage BUILD_OBJ_DIR if set otherwise assume PWD.
 		local x y targets=( "langpack" ) localedir="${BUILD_OBJ_DIR:-.}"
@@ -241,7 +241,7 @@ mozlinguas_src_compile() {
 			*) die "Building locales for ${PN} is not supported."
 		esac
 		pushd "${localedir}" > /dev/null || die
-		mozlinguas_export
+		mozlinguas-palemoon_export
 		for x in "${mozlinguas[@]}"; do for y in "${targets[@]}"; do
 			emake ${y}-${x} LOCALE_MERGEDIR="./${y}-${x}"
 		done; done
@@ -249,7 +249,7 @@ mozlinguas_src_compile() {
 	fi
 }
 
-# @FUNCTION: mozlinguas_xpistage_langpacks
+# @FUNCTION: mozlinguas-palemoon_xpistage_langpacks
 # @DESCRIPTION:
 # Add extra langpacks to the xpi-stage dir for prebuilt plugins
 #
@@ -261,20 +261,20 @@ mozlinguas_src_compile() {
 # Example - installing extra langpacks for lightning:
 # src_install() {
 # 	... # general installation steps
-# 	mozlinguas_xpistage_langpacks \
+# 	mozlinguas-palemoon_xpistage_langpacks \
 #		"${BUILD_OBJ_DIR}"/dist/xpi-stage/lightning \
 #		"${WORKDIR}"/lightning \
 #		lightning calendar
 #	... # proceed with installation from the xpi-stage dir
 # }
 
-mozlinguas_xpistage_langpacks() {
+mozlinguas-palemoon_xpistage_langpacks() {
 	local l c modpath="${1}" srcprefix="${1}" modules=( "${1##*/}" )
 	shift
 	if [[ -n ${1} ]] ; then srcprefix="${1}" ; shift ; fi
 	if [[ -n ${1} ]] ; then modules=( $@ ) ; fi
 
-	mozlinguas_export
+	mozlinguas-palemoon_export
 	mkdir -p "${modpath}/chrome" || die
 	for l in "${mozlinguas[@]}"; do	for c in "${modules[@]}" ; do
 		if [[ -e "${srcprefix}-${l}/chrome/${c}-${l}" ]]; then
@@ -291,13 +291,13 @@ mozlinguas_xpistage_langpacks() {
 	done; done
 }
 
-# @FUNCTION: mozlinguas_src_install
+# @FUNCTION: mozlinguas-palemoon_src_install
 # @DESCRIPTION:
 # Install xpi language packs according to the user's LINGUAS settings
 # NOTE - uses ${BUILD_OBJ_DIR} or PWD if unset, for source-generated langpacks
-mozlinguas_src_install() {
+mozlinguas-palemoon_src_install() {
 	local x
-	mozlinguas_export
+	mozlinguas-palemoon_export
 	if [[ -n ${MOZ_GENERATE_LANGPACKS} ]]; then
 		local repopath="${WORKDIR}/${PN}-generated-langpacks"
 		mkdir -p "${repopath}"

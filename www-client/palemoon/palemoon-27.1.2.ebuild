@@ -11,7 +11,7 @@ MOZ_LANGS=( cs de es-AR es-ES es-MX fr hu it ja ko pl ru zh-CN )
 MOZ_LANGPACK_PREFIX="langpacks/27.x/"
 MOZ_FTP_URI="http://relmirror.palemoon.org"
 
-inherit palemoon-1 mozlinguas git-r3 eutils flag-o-matic pax-utils
+inherit palemoon-1 mozlinguas-palemoon git-r3 eutils flag-o-matic pax-utils
 
 KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
@@ -92,7 +92,7 @@ src_unpack() {
 
 	# Unpack language packs:
 	cd "${WORKDIR}"
-	mozlinguas_src_unpack
+	mozlinguas-palemoon_src_unpack
 }
 
 src_prepare() {
@@ -242,7 +242,7 @@ src_install() {
 
 	# Install language packs:
 	MOZILLA_FIVE_HOME="${dest_libdir}/${PN}/browser"
-	mozlinguas_src_install
+	mozlinguas-palemoon_src_install
 
 	# Install icons and .desktop for menu entry:
 	cp -rL "${S}/${obj_dir}/dist/branding" "${extracted_dir}/"
