@@ -47,7 +47,7 @@ palemoon-2_pkg_setup() {
 official-branding_warning() {
 	elog "You are enabling the official branding. You may not redistribute this build"
 	elog "to any users on your network or the internet. Doing so puts yourself into"
-	elog "a legal problem with Moonchild Productions"
+	elog "a legal problem with Moonchild Productions."
 	elog "You can disable the official branding by emerging ${PN} _without_"
 	elog "the official-branding USE flag."
 }
