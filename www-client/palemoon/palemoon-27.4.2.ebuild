@@ -73,7 +73,8 @@ RDEPEND="
 REQUIRED_USE="
 	jemalloc? ( !valgrind )
 	^^ ( gtk2 gtk3 )
-	^^ ( alsa pulseaudio )
+	alsa? ( !pulseaudio )
+	pulseaudio? ( !alsa )
 	necko-wifi? ( dbus )"
 
 src_unpack() {
