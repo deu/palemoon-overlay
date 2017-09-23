@@ -1,6 +1,5 @@
 # Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id$
 
 EAPI=6
 
@@ -182,10 +181,12 @@ src_configure() {
 	mozconfig_var PYTHON $(which python2)
 	mozconfig_var AUTOCONF $(which autoconf-2.13)
 	mozconfig_var MOZ_MAKE_FLAGS "${MAKEOPTS}"
+
+	# Shorten obj dir to limit some errors linked to the path size hitting a kernel limit (127 chars)
+	# see https://github.com/deuiore/palemoon-overlay/issues/37#issuecomment-318093218
+	mozconfig_var MOZ_OBJDIR "@TOPSRCDIR@/o"
 	# Disable mach notifications, which also cause sandbox access violations:
 	export MOZ_NOSPAM=1
-
-	python2 mach # Run it once to create the state directory.
 }
 
 src_compile() {
