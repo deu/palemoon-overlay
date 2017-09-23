@@ -1,0 +1,23 @@
+From 7a098c3d794a2e8a51454d80fa248a95b5a460fe Mon Sep 17 00:00:00 2001
+From: Pale Moon <git-repo@palemoon.org>
+Date: Tue, 5 Sep 2017 22:48:34 +0200
+Subject: [PATCH] Explicitly include <sys/sysmacros.h> in
+ xpcom/io/nsLocalFileUnix.cpp
+
+This should take care of the problem reported in #1324.
+---
+ xpcom/io/nsLocalFileUnix.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/xpcom/io/nsLocalFileUnix.cpp b/xpcom/io/nsLocalFileUnix.cpp
+index aedb15cb8e..cb023f5213 100644
+--- a/xpcom/io/nsLocalFileUnix.cpp
++++ b/xpcom/io/nsLocalFileUnix.cpp
+@@ -13,6 +13,7 @@
+ 
+ #include <sys/types.h>
+ #include <sys/stat.h>
++#include <sys/sysmacros.h> // No longer implicitly included in later glibc
+ #include <unistd.h>
+ #include <fcntl.h>
+ #include <errno.h>

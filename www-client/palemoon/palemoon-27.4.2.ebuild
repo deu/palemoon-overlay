@@ -76,6 +76,8 @@ REQUIRED_USE="
 	pulseaudio? ( !alsa )
 	necko-wifi? ( dbus )"
 
+PATCHES=( "${FILESDIR}/${PV}-missingheader.patch" )
+
 src_unpack() {
 	git-r3_fetch ${EGIT_REPO_URI} refs/tags/${GIT_TAG}
 	git-r3_checkout
@@ -94,8 +96,7 @@ src_prepare() {
 		"${S}/xpcom/io/nsAppFileLocationProvider.cpp" \
 		|| die "sed failed to replace plugin path for 64bit!"
 
-	# Allow users to apply any additional patches without modifing the ebuild:
-	eapply_user
+	default
 }
 
 src_configure() {
