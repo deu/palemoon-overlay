@@ -6,6 +6,7 @@
 	<flag name="shared-js">Create a shared JavaScript library</flag>
 	<flag name="gtk2">Use <pkg>x11-libs/gtk+</pkg>:2</flag>
 	<flag name="gtk3">Use <pkg>x11-libs/gtk+</pkg>:3</flag>
+	<flag name="jemalloc">Replace memory allocator with jemalloc</flag>
 	<flag name="necko-wifi">Enable the necko wifi scanner</flag>
 	<flag name="official-branding">Enable official branding</flag>
 	<flag name="optimize">Enable compiler optimization</flag>
