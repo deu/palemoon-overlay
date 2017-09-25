@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<use>
+	<flag name="devtools">Enable Mozilla Developer Tools</flag>
+	<flag name="shared-js">Create a shared JavaScript library</flag>
+	<flag name="gtk2">Use <pkg>x11-libs/gtk+</pkg>:2</flag>
+	<flag name="gtk3">Use <pkg>x11-libs/gtk+</pkg>:3</flag>
+	<flag name="jemalloc">Replace memory allocator with jemalloc</flag>
+	<flag name="necko-wifi">Enable the necko wifi scanner</flag>
+	<flag name="official-branding">Enable official branding</flag>
+	<flag name="optimize">Enable compiler optimization</flag>
+	<flag name="valgrind">Enable Valgrind integration hooks</flag>
+	<flag name="webrtc">Enable support for WebRTC</flag>
+	<flag name="system-bzip2">Use the system-wide <pkg>app-arch/bzip2</pkg>
+		instead of bundled.</flag>
+	<flag name="system-hunspell">Use the system-wide <pkg>app-text/hunspell</pkg>
+		instead of bundled.</flag>
+	<flag name="system-libevent">Use the system-wide <pkg>dev-libs/libevent</pkg>
+		instead of bundled.</flag>
+	<flag name="system-libvpx">Use the system-wide <pkg>media-libs/libvpx</pkg>
+		instead of bundled.</flag>
+	<flag name="system-libwebp">Use the system-wide <pkg>media-libs/libwebp</pkg>
+		instead of bundled.</flag>
+	<flag name="system-sqlite">Use the system-wide <pkg>dev-db/sqlite</pkg>
+		installation with secure-delete enabled</flag>
+	<flag name="system-zlib">Use the system-wide <pkg>sys-libs/zlib</pkg>
+		instead of bundled.</flag>
+</use>
+</pkgmetadata>
+

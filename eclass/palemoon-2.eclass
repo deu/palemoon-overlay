@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-inherit check-reqs gnome2-utils fdo-mime
+inherit check-reqs gnome2-utils fdo-mime toolchain-funcs
 
 EXPORT_FUNCTIONS pkg_pretend pkg_preinst pkg_postinst pkg_postrm pkg_setup
 
@@ -16,8 +16,7 @@ palemoon-2_pkg_pretend() {
 	if [[ $PALEMOON_ENABLE_UNSUPPORTED_COMPILERS == 1 ]]; then
 		unsupported_compiler_warning
 	else
-		gcc_version="$(gcc -dumpversion | cut -d. -f1,2)"
-		if ! [[ "$GCC_SUPPORTED_VERSIONS" =~ (^| )"$gcc_version"($| ) ]]; then
+		if ! [[ tc-is-gcc && "$GCC_SUPPORTED_VERSIONS" =~ (^| )"$(gcc-version)"($| ) ]]; then
 			unsupported_compiler_error
 			die
 		fi
@@ -73,6 +72,8 @@ unsupported_compiler_error() {
 	eerror "Be aware though that building Pale Moon with an unsupported compiler"
 	eerror "means that the official support channels may refuse to offer any"
 	eerror "kind of help in case the build fails or the browser behaves incorrectly."
+	eerror "GCC version found :"
+	eerror "$(gcc-version)"
 }
 
 mozconfig_init() {

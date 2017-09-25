@@ -1,6 +1,5 @@
 # Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id$
 
 EAPI=6
 
@@ -8,7 +7,7 @@ REQUIRED_BUILDSPACE='7G'
 GCC_SUPPORTED_VERSIONS="4.7 4.8 4.9"
 
 # For mozlinguas:
-MOZ_LANGS=( cs de es-AR es-ES es-MX fr hu it ja ko pl ru zh-CN )
+MOZ_LANGS=( cs de en-GB es-AR es-ES es-MX fr hu it ko pl pt-BR pt-PT nl ru sv-SE tr zh-CN )
 MOZ_LANGPACK_PREFIX="langpacks/27.x/"
 MOZ_FTP_URI="http://relmirror.palemoon.org"
 
@@ -77,6 +76,8 @@ REQUIRED_USE="
 	pulseaudio? ( !alsa )
 	necko-wifi? ( dbus )"
 
+PATCHES=( "${FILESDIR}/${PV}-missingheader.patch" )
+
 src_unpack() {
 	git-r3_fetch ${EGIT_REPO_URI} refs/tags/${GIT_TAG}
 	git-r3_checkout
@@ -95,8 +96,7 @@ src_prepare() {
 		"${S}/xpcom/io/nsAppFileLocationProvider.cpp" \
 		|| die "sed failed to replace plugin path for 64bit!"
 
-	# Allow users to apply any additional patches without modifing the ebuild:
-	eapply_user
+	default
 }
 
 src_configure() {
@@ -182,10 +182,12 @@ src_configure() {
 	mozconfig_var PYTHON $(which python2)
 	mozconfig_var AUTOCONF $(which autoconf-2.13)
 	mozconfig_var MOZ_MAKE_FLAGS "${MAKEOPTS}"
+
+	# Shorten obj dir to limit some errors linked to the path size hitting a kernel limit (127 chars)
+	# see https://github.com/deuiore/palemoon-overlay/issues/37#issuecomment-318093218
+	mozconfig_var MOZ_OBJDIR "@TOPSRCDIR@/o"
 	# Disable mach notifications, which also cause sandbox access violations:
 	export MOZ_NOSPAM=1
-
-	python2 mach # Run it once to create the state directory.
 }
 
 src_compile() {
