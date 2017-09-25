@@ -17,7 +17,7 @@ palemoon-2_pkg_pretend() {
 		unsupported_compiler_warning
 	else
 		if ! [[ tc-is-gcc && "$GCC_SUPPORTED_VERSIONS" =~ (^| )"$(gcc-version)"($| ) ]]; then
-			unsupported_compiler_error
+			unsupported_compiler_error $(tc-get-compiler-type)
 			die
 		fi
 	fi
@@ -53,15 +53,16 @@ official-branding_warning() {
 
 unsupported_compiler_warning() {
 	ewarn "Building Pale Moon with a compiler other than a supported gcc version"
-	ewarn "(${GCC_SUPPORTED_VERSIONS// /, }) may result in an unstable build."
+	ewarn "may result in an unstable build."
 	ewarn "Be aware that building Pale Moon with an unsupported compiler"
 	ewarn "means that the official support channels may refuse to offer any"
 	ewarn "kind of help in case the build fails or the browser behaves incorrectly."
+	ewarn "Supported GCC versions: ${GCC_SUPPORTED_VERSIONS// /, }"
 }
 
 unsupported_compiler_error() {
 	eerror "Building Pale Moon with a compiler other than a supported gcc version"
-	eerror "(${GCC_SUPPORTED_VERSIONS// /, }) may result in an unstable build."
+	eerror "may result in an unstable build."
 	eerror "You can use gcc-config to change your compiler profile, just remember"
 	eerror "to change it back afterwards."
 	eerror "You need to have the appropriate versions of gcc installed for them"
@@ -72,8 +73,12 @@ unsupported_compiler_error() {
 	eerror "Be aware though that building Pale Moon with an unsupported compiler"
 	eerror "means that the official support channels may refuse to offer any"
 	eerror "kind of help in case the build fails or the browser behaves incorrectly."
-	eerror "GCC version found :"
-	eerror "$(gcc-version)"
+	eerror "Supported GCC versions: ${GCC_SUPPORTED_VERSIONS// /, }"
+	if [[ "$1" == "gcc" ]]; then
+		eerror "Selected GCC version: $(gcc-version)"
+	else
+		eerror "Unsupported compiler selected: $1"
+	fi
 }
 
 mozconfig_init() {
