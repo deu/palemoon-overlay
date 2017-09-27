@@ -6,7 +6,7 @@ EAPI=6
 REQUIRED_BUILDSPACE='7G'
 
 # For mozlinguas:
-MOZ_LANGS=( cs de es-AR es-ES es-MX fr hu it ja ko pl ru zh-CN )
+MOZ_LANGS=( cs de es-AR es-ES es-MX fr hu it ko pl ru zh-CN )
 MOZ_LANGPACK_PREFIX="langpacks/27.x/"
 MOZ_FTP_URI="http://relmirror.palemoon.org"
 

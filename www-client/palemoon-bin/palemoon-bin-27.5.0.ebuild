@@ -14,11 +14,11 @@ SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="startup-notification"
 
-MOZ_PN="${PN/-bin/}"
+BIN_PN="${PN/-bin/}"
 RESTRICT="strip mirror"
 SRC_URI="
-	amd64? ( https://linux.palemoon.org/files/${PV}/${MOZ_PN}-${PV}.en-US.linux-x86_64.tar.bz2 )
-	x86? ( https://linux.palemoon.org/files/${PV}/${MOZ_PN}-${PV}.en-US.linux-i686.tar.bz2 )"
+	amd64? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.en-US.linux-x86_64.tar.bz2 )
+	x86? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.en-US.linux-i686.tar.bz2 )"
 
 DEPEND="
 	dev-util/patchelf
@@ -47,21 +47,21 @@ RDEPEND="
 "
 
 QA_PREBUILT="
-	opt/${MOZ_PN}/*.so
-	opt/${MOZ_PN}/${MOZ_PN}
-	opt/${MOZ_PN}/${PN}
-	opt/${MOZ_PN}/plugin-container
-	opt/${MOZ_PN}/mozilla-xremote-client
+	opt/${BIN_PN}/*.so
+	opt/${BIN_PN}/${BIN_PN}
+	opt/${BIN_PN}/${PN}
+	opt/${BIN_PN}/plugin-container
+	opt/${BIN_PN}/mozilla-xremote-client
 "
 
-S="${WORKDIR}/${MOZ_PN}"
+S="${WORKDIR}/${BIN_PN}"
 
 src_unpack() {
 	unpack ${A}
 }
 
 src_install() {
-	declare MOZILLA_FIVE_HOME=/opt/${MOZ_PN}
+	declare PALEMOON_INSTDIR=/opt/${BIN_PN}
 
 	local size sizes icon_path icon name
 	sizes="16 32 48"
@@ -89,33 +89,33 @@ src_install() {
 	fi
 
 	# Install palemoon in /opt:
-	dodir ${MOZILLA_FIVE_HOME%/*}
-	mv "${S}" "${ED}"${MOZILLA_FIVE_HOME} || die
+	dodir ${PALEMOON_INSTDIR%/*}
+	mv "${S}" "${ED}"${PALEMOON_INSTDIR} || die
 
 	# Create /usr/bin/palemoon-bin:
 	dodir /usr/bin/
 	cat <<-EOF >"${ED}"usr/bin/${PN}
 	#!/bin/sh
 	GTK_PATH=/usr/lib/gtk-2.0/
-	exec /opt/${MOZ_PN}/${MOZ_PN} "\$@"
+	exec /opt/${BIN_PN}/${BIN_PN} "\$@"
 	EOF
 	fperms 0755 /usr/bin/${PN}
 
 	# Mainly to prevent system's NSS/NSPR from taking precedence over
 	# the built-in ones:
-	for elf in $(scanelf -RBF "%F" "${ED}"${MOZILLA_FIVE_HOME}/*); do
+	for elf in $(scanelf -RBF "%F" "${ED}"${PALEMOON_INSTDIR}/*); do
 		echo "Patching ELF ${elf}"
-		patchelf --set-rpath "${MOZILLA_FIVE_HOME}" "${elf}"
+		patchelf --set-rpath "${PALEMOON_INSTDIR}" "${elf}"
 	done
 
 	# revdep-rebuild entry:
 	insinto /etc/revdep-rebuild
-	echo "SEARCH_DIRS_MASK=${MOZILLA_FIVE_HOME}" >> ${T}/10${PN}
+	echo "SEARCH_DIRS_MASK=${PALEMOON_INSTDIR}" >> ${T}/10${PN}
 	doins "${T}"/10${PN} || die
 
 	# Plugins dir:
-	dosym "/usr/$(get_libdir)/nsbrowser/plugins" "${MOZILLA_FIVE_HOME}/browser/plugins"
+	dosym "/usr/$(get_libdir)/nsbrowser/plugins" "${PALEMOON_INSTDIR}/browser/plugins"
 
 	# Required in order to use plugins and even run palemoon on hardened:
-	pax-mark mr "${ED}"${MOZILLA_FIVE_HOME}/{palemoon,palemoon-bin,plugin-container}
+	pax-mark mr "${ED}"${PALEMOON_INSTDIR}/{palemoon,palemoon-bin,plugin-container}
 }

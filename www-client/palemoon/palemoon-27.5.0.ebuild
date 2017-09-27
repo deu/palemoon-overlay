@@ -4,13 +4,13 @@
 EAPI=6
 
 REQUIRED_BUILDSPACE='7G'
+GCC_SUPPORTED_VERSIONS="4.7 4.8 4.9"
 
-# For mozlinguas:
-MOZ_LANGS=( cs de es-AR es-ES es-MX fr hu it ja ko pl ru zh-CN )
-MOZ_LANGPACK_PREFIX="langpacks/27.x/"
-MOZ_FTP_URI="http://relmirror.palemoon.org"
+L10N_LANGUAGES="cs de en-GB es-AR es-ES es-MX fr hu it ko nl pl pt-BR pt-PT ru sv-SE tr zh-CN"
+L10N_REPO_URI="https://github.com/MoonchildProductions/pale-moon-localization.git"
+L10N_COMMIT="254c3de4aab82f14bef063a1c3a633e1f1fa5258"
 
-inherit palemoon-1 mozlinguas-palemoon git-r3 eutils flag-o-matic pax-utils
+inherit palemoon-3 git-r3 eutils flag-o-matic pax-utils
 
 KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
@@ -18,11 +18,16 @@ HOMEPAGE="https://www.palemoon.org/"
 
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
-IUSE="+official-branding -system-libs +optimize shared-js jemalloc -valgrind
-	dbus -necko-wifi +gtk2 -gtk3 -webrtc alsa pulseaudio +devtools"
+IUSE="+official-branding
+	-system-libevent -system-zlib -system-bzip2 -system-libwebp -system-libvpx
+	-system-hunspell -system-sqlite
+	+optimize shared-js jemalloc -valgrind dbus -necko-wifi +gtk2 -gtk3
+	-webrtc alsa pulseaudio +devtools"
 
 EGIT_REPO_URI="https://github.com/MoonchildProductions/Pale-Moon.git"
 GIT_TAG="${PV}_Release"
+
+RESTRICT="mirror"
 
 DEPEND="
 	>=sys-devel/autoconf-2.13:2.1
@@ -37,15 +42,13 @@ RDEPEND="
 	media-libs/fontconfig
 	virtual/ffmpeg[x264]
 
-	system-libs? (
-		dev-libs/libevent
-		sys-libs/zlib
-		app-arch/bzip2
-		media-libs/libwebp
-		>=media-libs/libvpx-1.4.0
-		~app-text/hunspell-1.6.0
-		>=dev-db/sqlite-3.13.0[secure-delete]
-	)
+	system-libevent? ( dev-libs/libevent )
+	system-zlib?     ( sys-libs/zlib )
+	system-bzip2?    ( app-arch/bzip2 )
+	system-libwebp?  ( media-libs/libwebp )
+	system-libvpx?   ( >=media-libs/libvpx-1.4.0 )
+	system-hunspell? ( app-text/hunspell:1.6 )
+	system-sqlite?   ( >=dev-db/sqlite-3.19.3[secure-delete] )
 
 	optimize? ( sys-libs/glibc )
 
@@ -69,16 +72,16 @@ RDEPEND="
 REQUIRED_USE="
 	jemalloc? ( !valgrind )
 	^^ ( gtk2 gtk3 )
-	^^ ( alsa pulseaudio )
+	alsa? ( !pulseaudio )
+	pulseaudio? ( !alsa )
 	necko-wifi? ( dbus )"
 
 src_unpack() {
 	git-r3_fetch ${EGIT_REPO_URI} refs/tags/${GIT_TAG}
 	git-r3_checkout
 
-	# Unpack language packs:
-	cd "${WORKDIR}"
-	mozlinguas-palemoon_src_unpack
+	# Download language packs:
+	l10n_get
 }
 
 src_prepare() {
@@ -90,8 +93,7 @@ src_prepare() {
 		"${S}/xpcom/io/nsAppFileLocationProvider.cpp" \
 		|| die "sed failed to replace plugin path for 64bit!"
 
-	# Allow users to apply any additional patches without modifing the ebuild:
-	eapply_user
+	default
 }
 
 src_configure() {
@@ -100,11 +102,18 @@ src_configure() {
 
 	mozconfig_disable updater
 
-	if use system-libs; then
-		mozconfig_with system-libevent system-zlib system-bz2 \
-			system-webp system-libvpx
-		mozconfig_enable system-hunspell system-sqlite
+	if use official-branding; then
+		official-branding_warning
+		mozconfig_enable official-branding
 	fi
+
+	if use system-libevent; then mozconfig_with system-libevent; fi
+	if use system-zlib;     then mozconfig_with system-zlib; fi
+	if use system-bzip2;    then mozconfig_with system-bz2; fi
+	if use system-libwebp;  then mozconfig_with system-webp; fi
+	if use system-libvpx;   then mozconfig_with system-libvpx; fi
+	if use system-hunspell; then mozconfig_enable system-hunspell; fi
+	if use system-sqlite;   then mozconfig_enable system-sqlite; fi
 
 	if use optimize; then
 		O=$(get-flag '-O*')
@@ -150,11 +159,6 @@ src_configure() {
 		mozconfig_disable pulseaudio
 	fi
 
-	if use official-branding; then
-		official-branding_warning
-		mozconfig_enable official-branding
-	fi
-
 	if use gtk2; then
 		mozconfig_enable default-toolkit=\"cairo-gtk2\"
 	fi
@@ -175,11 +179,13 @@ src_configure() {
 	mozconfig_var PYTHON $(which python2)
 	mozconfig_var AUTOCONF $(which autoconf-2.13)
 	mozconfig_var MOZ_MAKE_FLAGS "${MAKEOPTS}"
+
+	# Shorten obj dir to limit some errors linked to the path size hitting
+	# a kernel limit (127 chars):
+	mozconfig_var MOZ_OBJDIR "@TOPSRCDIR@/o"
+
 	# Disable mach notifications, which also cause sandbox access violations:
 	export MOZ_NOSPAM=1
-
-	python2 mach # Run it once to create the state directory.
-	python2 mach configure || die
 }
 
 src_compile() {
@@ -218,26 +224,8 @@ src_install() {
 	pax-mark m "${D}/${dest_libdir}/${PN}/"{palemoon,palemoon-bin,plugin-container}
 
 	# Install language packs:
-	MOZILLA_FIVE_HOME="${dest_libdir}/${PN}/browser"
-	mozlinguas-palemoon_src_install
+	l10n_install
 
 	# Install icons and .desktop for menu entry:
-	cp -rL "${S}/${obj_dir}/dist/branding" "${extracted_dir}/"
-	local size sizes icon_path icon name
-	sizes="16 32 48"
-	icon_path="${extracted_dir}/branding"
-	icon="${PN}"
-	name="Pale Moon"
-	for size in ${sizes}; do
-		insinto "/usr/share/icons/hicolor/${size}x${size}/apps"
-		newins "${icon_path}/default${size}.png" "${icon}.png"
-	done
-	# The 128x128 icon has a different name:
-	insinto "/usr/share/icons/hicolor/128x128/apps"
-	newins "${icon_path}/mozicon128.png" "${icon}.png"
-	# Install a 48x48 icon into /usr/share/pixmaps for legacy DEs:
-	newicon "${icon_path}/default48.png" "${icon}.png"
-	newmenu "${FILESDIR}/icon/${PN}.desktop" "${PN}.desktop"
-	sed -i -e "s:@NAME@:${name}:" -e "s:@ICON@:${icon}:" \
-		"${ED}/usr/share/applications/${PN}.desktop" || die
+	install_branding_files
 }

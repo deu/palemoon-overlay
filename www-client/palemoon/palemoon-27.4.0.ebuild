@@ -7,7 +7,7 @@ REQUIRED_BUILDSPACE='7G'
 GCC_SUPPORTED_VERSIONS="4.7 4.8 4.9"
 
 # For mozlinguas:
-MOZ_LANGS=( cs de es-AR es-ES es-MX fr hu it ja ko pl ru zh-CN )
+MOZ_LANGS=( cs de es-AR es-ES es-MX fr hu it ko pl ru zh-CN )
 MOZ_LANGPACK_PREFIX="langpacks/27.x/"
 MOZ_FTP_URI="http://relmirror.palemoon.org"
 
