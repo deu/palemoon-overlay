@@ -20,7 +20,7 @@ SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="+official-branding
 	-system-libevent -system-zlib -system-bzip2 -system-libwebp -system-libvpx
-	-system-hunspell -system-sqlite
+	-system-sqlite
 	+optimize shared-js jemalloc -valgrind dbus -necko-wifi +gtk2 -gtk3
 	-webrtc alsa pulseaudio +devtools"
 
@@ -47,7 +47,6 @@ RDEPEND="
 	system-bzip2?    ( app-arch/bzip2 )
 	system-libwebp?  ( media-libs/libwebp )
 	system-libvpx?   ( >=media-libs/libvpx-1.4.0 )
-	system-hunspell? ( app-text/hunspell:1.6 )
 	system-sqlite?   ( >=dev-db/sqlite-3.19.3[secure-delete] )
 
 	optimize? ( sys-libs/glibc )
@@ -112,7 +111,6 @@ src_configure() {
 	if use system-bzip2;    then mozconfig_with system-bz2; fi
 	if use system-libwebp;  then mozconfig_with system-webp; fi
 	if use system-libvpx;   then mozconfig_with system-libvpx; fi
-	if use system-hunspell; then mozconfig_enable system-hunspell; fi
 	if use system-sqlite;   then mozconfig_enable system-sqlite; fi
 
 	if use optimize; then
