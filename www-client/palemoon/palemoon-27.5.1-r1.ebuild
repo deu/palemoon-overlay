@@ -37,7 +37,6 @@ RDEPEND="
 	app-arch/zip
 	media-libs/freetype
 	media-libs/fontconfig
-	ffmpeg? ( virtual/ffmpeg[x264] )
 
 	system-libevent? ( dev-libs/libevent )
 	system-zlib?     ( sys-libs/zlib )
@@ -62,6 +61,8 @@ RDEPEND="
 
 	alsa? ( media-libs/alsa-lib )
 	pulseaudio? ( media-sound/pulseaudio )
+
+	ffmpeg? ( virtual/ffmpeg[x264] )
 
 	necko-wifi? ( net-wireless/wireless-tools )"
 
@@ -187,7 +188,7 @@ src_configure() {
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
 	mozconfig_var PYTHON $(which python2)
 	mozconfig_var AUTOCONF $(which autoconf-2.13)
-	mozconfig_var MOZ_MAKE_FLAGS \"${MAKEOPTS}\"
+	mozconfig_var MOZ_MAKE_FLAGS "\"${MAKEOPTS}\""
 
 	# Shorten obj dir to limit some errors linked to the path size hitting
 	# a kernel limit (127 chars):
