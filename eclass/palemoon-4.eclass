@@ -1,6 +1,3 @@
-# Copyright 1999-2017 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
-
 inherit check-reqs gnome2-utils fdo-mime toolchain-funcs
 
 EXPORT_FUNCTIONS pkg_pretend pkg_preinst pkg_postinst pkg_postrm pkg_setup

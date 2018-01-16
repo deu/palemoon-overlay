@@ -1,13 +1,9 @@
 EAPI=6
 
 REQUIRED_BUILDSPACE='7G'
-GCC_SUPPORTED_VERSIONS="4.7 4.8 4.9"
+GCC_SUPPORTED_VERSIONS="4.7 4.9"
 
-L10N_LANGUAGES="cs de en-GB es-AR es-ES es-MX fr hu it ko nl pl pt-BR pt-PT ru sv-SE tr zh-CN"
-L10N_REPO_URI="https://github.com/MoonchildProductions/pale-moon-localization.git"
-L10N_COMMIT="254c3de4aab82f14bef063a1c3a633e1f1fa5258"
-
-inherit palemoon-3 git-r3 eutils flag-o-matic pax-utils
+inherit palemoon-4 git-r3 eutils flag-o-matic pax-utils
 
 KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
@@ -16,10 +12,11 @@ HOMEPAGE="https://www.palemoon.org/"
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="+official-branding
+	+optimize cpu_flags_x86_sse cpu_flags_x86_sse2 threads debug
 	-system-libevent -system-zlib -system-bzip2 -system-libwebp -system-libvpx
 	-system-sqlite
-	+optimize shared-js jemalloc -valgrind dbus -necko-wifi +gtk2 -gtk3
-	-webrtc alsa pulseaudio +devtools"
+	shared-js jemalloc -valgrind dbus -necko-wifi +gtk2 -gtk3 -webrtc
+	alsa pulseaudio ffmpeg +devtools"
 
 EGIT_REPO_URI="https://github.com/MoonchildProductions/Pale-Moon.git"
 GIT_TAG="${PV}_Release"
@@ -37,14 +34,13 @@ RDEPEND="
 	app-arch/zip
 	media-libs/freetype
 	media-libs/fontconfig
-	virtual/ffmpeg[x264]
 
 	system-libevent? ( dev-libs/libevent )
 	system-zlib?     ( sys-libs/zlib )
 	system-bzip2?    ( app-arch/bzip2 )
 	system-libwebp?  ( media-libs/libwebp )
 	system-libvpx?   ( >=media-libs/libvpx-1.4.0 )
-	system-sqlite?   ( >=dev-db/sqlite-3.19.3[secure-delete] )
+	system-sqlite?   ( >=dev-db/sqlite-3.21.0[secure-delete] )
 
 	optimize? ( sys-libs/glibc )
 
@@ -63,9 +59,12 @@ RDEPEND="
 	alsa? ( media-libs/alsa-lib )
 	pulseaudio? ( media-sound/pulseaudio )
 
+	ffmpeg? ( virtual/ffmpeg[x264] )
+
 	necko-wifi? ( net-wireless/wireless-tools )"
 
 REQUIRED_USE="
+	optimize? ( !debug )
 	jemalloc? ( !valgrind )
 	^^ ( gtk2 gtk3 )
 	alsa? ( !pulseaudio )
@@ -75,9 +74,6 @@ REQUIRED_USE="
 src_unpack() {
 	git-r3_fetch ${EGIT_REPO_URI} refs/tags/${GIT_TAG}
 	git-r3_checkout
-
-	# Download language packs:
-	l10n_get
 }
 
 src_prepare() {
@@ -96,7 +92,7 @@ src_configure() {
 	# Basic configuration:
 	mozconfig_init
 
-	mozconfig_disable updater
+	mozconfig_disable installer updater install-strip
 
 	if use official-branding; then
 		official-branding_warning
@@ -111,11 +107,23 @@ src_configure() {
 	if use system-sqlite;   then mozconfig_enable system-sqlite; fi
 
 	if use optimize; then
-		O=$(get-flag '-O*')
-		mozconfig_enable optimize=\"$O\"
-		filter-flags '-O*'
+		O='-O2'
+		if use cpu_flags_x86_sse && use cpu_flags_x86_sse2; then
+			O="${O} -msse2 -mfpmath=sse"
+		fi
+		mozconfig_enable "optimize=\"${O}\""
+		filter-flags '-O*' '-msse2' '-mfpmath=sse'
 	else
 		mozconfig_disable optimize
+	fi
+
+	if use threads; then
+		mozconfig_with pthreads
+	fi
+
+	if use debug; then
+		mozconfig_var MOZ_DEBUG_SYMBOLS 1
+		mozconfig_enable "debug-symbols=\"-gdwarf-2\""
 	fi
 
 	if use shared-js; then
@@ -128,30 +136,10 @@ src_configure() {
 
 	if use valgrind; then
 		mozconfig_enable valgrind
-	else
-		mozconfig_disable valgrind
 	fi
 
 	if ! use dbus; then
 		mozconfig_disable dbus
-	fi
-
-	if ! use necko-wifi; then
-		mozconfig_disable necko-wifi
-	fi
-
-	if use webrtc; then
-		mozconfig_enable webrtc
-	else
-		mozconfig_disable webrtc
-	fi
-
-	if   use alsa; then
-		mozconfig_enable alsa
-	fi
-
-	if ! use pulseaudio; then
-		mozconfig_disable pulseaudio
 	fi
 
 	if use gtk2; then
@@ -162,8 +150,28 @@ src_configure() {
 		mozconfig_enable default-toolkit=\"cairo-gtk3\"
 	fi
 
+	if ! use necko-wifi; then
+		mozconfig_disable necko-wifi
+	fi
+
+	if use webrtc; then
+		mozconfig_enable webrtc
+	fi
+
+	if   use alsa; then
+		mozconfig_enable alsa
+	fi
+
+	if ! use pulseaudio; then
+		mozconfig_disable pulseaudio
+	fi
+
+	if ! use ffmpeg; then
+		mozconfig_disable ffmpeg
+	fi
+
 	if use devtools; then
-		mozconfig_enable devtools devtools-perf
+		mozconfig_enable devtools
 	fi
 
 	# Mainly to prevent system's NSS/NSPR from taking precedence over
@@ -173,7 +181,7 @@ src_configure() {
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
 	mozconfig_var PYTHON $(which python2)
 	mozconfig_var AUTOCONF $(which autoconf-2.13)
-	mozconfig_var MOZ_MAKE_FLAGS "${MAKEOPTS}"
+	mozconfig_var MOZ_MAKE_FLAGS "\"${MAKEOPTS}\""
 
 	# Shorten obj dir to limit some errors linked to the path size hitting
 	# a kernel limit (127 chars):
@@ -195,8 +203,8 @@ src_install() {
 	# Disable MPROTECT for startup cache creation:
 	pax-mark m "${obj_dir}"/dist/bin/xpcshell
 
-	load_default_prefs
-	set_pref "spellchecker.dictionary_path" "${EPREFIX}/usr/share/myspell"
+	# Set the backspace behaviour to be consistent with the other platforms:
+	set_pref "browser.backspace_action" 0
 
 	# Gotta create the package, unpack it and manually install the files
 	# from there not to miss anything (e.g. the statusbar extension):
@@ -217,9 +225,6 @@ src_install() {
 	# Until JIT-less builds are supported,
 	# also disable MPROTECT on the main executable:
 	pax-mark m "${D}/${dest_libdir}/${PN}/"{palemoon,palemoon-bin,plugin-container}
-
-	# Install language packs:
-	l10n_install
 
 	# Install icons and .desktop for menu entry:
 	install_branding_files
