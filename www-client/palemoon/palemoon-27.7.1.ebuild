@@ -40,7 +40,7 @@ RDEPEND="
 	system-bzip2?    ( app-arch/bzip2 )
 	system-libwebp?  ( media-libs/libwebp )
 	system-libvpx?   ( >=media-libs/libvpx-1.4.0 )
-	system-sqlite?   ( >=dev-db/sqlite-3.19.3[secure-delete] )
+	system-sqlite?   ( >=dev-db/sqlite-3.21.0[secure-delete] )
 
 	optimize? ( sys-libs/glibc )
 
@@ -136,8 +136,6 @@ src_configure() {
 
 	if use valgrind; then
 		mozconfig_enable valgrind
-	else
-		mozconfig_disable valgrind
 	fi
 
 	if ! use dbus; then
@@ -158,8 +156,6 @@ src_configure() {
 
 	if use webrtc; then
 		mozconfig_enable webrtc
-	else
-		mozconfig_disable webrtc
 	fi
 
 	if   use alsa; then
