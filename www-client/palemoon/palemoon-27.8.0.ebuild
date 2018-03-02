@@ -16,7 +16,7 @@ IUSE="+official-branding
 	-system-libevent -system-zlib -system-bzip2 -system-libwebp -system-libvpx
 	-system-sqlite
 	shared-js jemalloc -valgrind dbus -necko-wifi +gtk2 -gtk3 -webrtc
-	alsa pulseaudio ffmpeg +devtools"
+	alsa pulseaudio +devtools"
 
 EGIT_REPO_URI="https://github.com/MoonchildProductions/Pale-Moon.git"
 GIT_TAG="${PV}_Release"
@@ -40,7 +40,7 @@ RDEPEND="
 	system-bzip2?    ( app-arch/bzip2 )
 	system-libwebp?  ( media-libs/libwebp )
 	system-libvpx?   ( >=media-libs/libvpx-1.4.0 )
-	system-sqlite?   ( >=dev-db/sqlite-3.19.3[secure-delete] )
+	system-sqlite?   ( >=dev-db/sqlite-3.21.0[secure-delete] )
 
 	optimize? ( sys-libs/glibc )
 
@@ -59,7 +59,7 @@ RDEPEND="
 	alsa? ( media-libs/alsa-lib )
 	pulseaudio? ( media-sound/pulseaudio )
 
-	ffmpeg? ( virtual/ffmpeg[x264] )
+	virtual/ffmpeg[x264]
 
 	necko-wifi? ( net-wireless/wireless-tools )"
 
@@ -164,10 +164,6 @@ src_configure() {
 
 	if ! use pulseaudio; then
 		mozconfig_disable pulseaudio
-	fi
-
-	if ! use ffmpeg; then
-		mozconfig_disable ffmpeg
 	fi
 
 	if use devtools; then
