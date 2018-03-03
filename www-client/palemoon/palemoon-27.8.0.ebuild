@@ -15,7 +15,7 @@ IUSE="+official-branding
 	+optimize cpu_flags_x86_sse cpu_flags_x86_sse2 threads debug
 	-system-libevent -system-zlib -system-bzip2 -system-libwebp -system-libvpx
 	-system-sqlite
-	shared-js jemalloc -valgrind dbus -necko-wifi +gtk2 -gtk3 -webrtc
+	shared-js jemalloc -valgrind dbus -necko-wifi +gtk2 -gtk3
 	alsa pulseaudio +devtools"
 
 EGIT_REPO_URI="https://github.com/MoonchildProductions/Pale-Moon.git"
@@ -152,10 +152,6 @@ src_configure() {
 
 	if ! use necko-wifi; then
 		mozconfig_disable necko-wifi
-	fi
-
-	if use webrtc; then
-		mozconfig_enable webrtc
 	fi
 
 	if   use alsa; then
