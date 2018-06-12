@@ -11,12 +11,29 @@ HOMEPAGE="https://www.palemoon.org/"
 
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
-IUSE="+official-branding
-	+optimize cpu_flags_x86_sse cpu_flags_x86_sse2 threads debug
-	-system-libevent -system-zlib -system-bzip2 -system-libwebp -system-libvpx
+IUSE="
+	+official-branding
+	+optimize
+	cpu_flags_x86_sse
+	cpu_flags_x86_sse2
+	threads
+	debug
+	-system-libevent
+	-system-zlib
+	-system-bzip2
+	-system-libwebp
+	-system-libvpx
 	-system-sqlite
-	shared-js jemalloc -valgrind dbus -necko-wifi +gtk2 -gtk3
-	alsa pulseaudio +devtools"
+	+shared-js
+	+jemalloc
+	-valgrind
+	dbus
+	-necko-wifi
+	+gtk2
+	-gtk3
+	pulseaudio
+	+devtools
+"
 
 EGIT_REPO_URI="https://github.com/MoonchildProductions/Pale-Moon.git"
 GIT_TAG="${PV}_Release"
@@ -27,7 +44,8 @@ DEPEND="
 	>=sys-devel/autoconf-2.13:2.1
 	dev-lang/python:2.7
 	>=dev-lang/perl-5.6
-	dev-lang/yasm"
+	dev-lang/yasm
+"
 
 RDEPEND="
 	x11-libs/libXt
@@ -56,20 +74,28 @@ RDEPEND="
 	gtk2? ( >=x11-libs/gtk+-2.18.0:2 )
 	gtk3? ( >=x11-libs/gtk+-3.4.0:3 )
 
-	alsa? ( media-libs/alsa-lib )
+	media-libs/alsa-lib
 	pulseaudio? ( media-sound/pulseaudio )
 
 	virtual/ffmpeg[x264]
 
-	necko-wifi? ( net-wireless/wireless-tools )"
+	necko-wifi? ( net-wireless/wireless-tools )
+"
 
 REQUIRED_USE="
+	official-branding? (
+		!system-libevent
+		!system-zlib
+		!system-bzip2
+		!system-libwebp
+		!system-libvpx
+		!system-sqlite
+	)
 	optimize? ( !debug )
 	jemalloc? ( !valgrind )
 	^^ ( gtk2 gtk3 )
-	alsa? ( !pulseaudio )
-	pulseaudio? ( !alsa )
-	necko-wifi? ( dbus )"
+	necko-wifi? ( dbus )
+"
 
 src_unpack() {
 	git-r3_fetch ${EGIT_REPO_URI} refs/tags/${GIT_TAG}
@@ -152,10 +178,6 @@ src_configure() {
 
 	if ! use necko-wifi; then
 		mozconfig_disable necko-wifi
-	fi
-
-	if   use alsa; then
-		mozconfig_enable alsa
 	fi
 
 	if ! use pulseaudio; then
