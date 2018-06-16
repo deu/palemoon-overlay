@@ -80,6 +80,8 @@ RDEPEND="
 	virtual/ffmpeg[x264]
 
 	necko-wifi? ( net-wireless/wireless-tools )
+
+	elibc_musl? ( sys-libs/fts-standalone )
 "
 
 REQUIRED_USE="
@@ -95,6 +97,7 @@ REQUIRED_USE="
 	jemalloc? ( !valgrind )
 	^^ ( gtk2 gtk3 )
 	necko-wifi? ( dbus )
+	elibc_musl? ( !jemalloc ) 
 "
 
 src_unpack() {
@@ -110,6 +113,8 @@ src_prepare() {
 	sed -i -e "s:/usr/lib64/mozilla/plugins:/usr/lib64/nsbrowser/plugins:" \
 		"${S}/xpcom/io/nsAppFileLocationProvider.cpp" \
 		|| die "sed failed to replace plugin path for 64bit!"
+
+	use elibc_musl && PATCHES+=("${FILESDIR}/${PN}-musl.patch")
 
 	default
 }
@@ -156,8 +161,8 @@ src_configure() {
 		mozconfig_enable shared-js
 	fi
 
-	if use jemalloc; then
-		mozconfig_enable jemalloc jemalloc-lib
+	if ! use jemalloc; then
+		mozconfig_disable jemalloc jemalloc-lib
 	fi
 
 	if use valgrind; then
@@ -188,9 +193,21 @@ src_configure() {
 		mozconfig_enable devtools
 	fi
 
+	if use elibc_musl; then
+		mozconfig_disable gold
+	fi
+
 	# Mainly to prevent system's NSS/NSPR from taking precedence over
 	# the built-in ones:
 	append-ldflags -Wl,-rpath="$EPREFIX/usr/$(get_libdir)/palemoon"
+
+	# musl doesn't include libfts, needs standalone fts
+	use elibc_musl && append-ldflags -lfts
+
+	# borrow flags for mozilla gcc-6 support
+	if [[ $(gcc-major-version) -ge 6 ]]; then
+		append-cxxflags -fno-delete-null-pointer-checks -fno-lifetime-dse -fno-schedule-insns2
+	fi
 
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
 	mozconfig_var PYTHON $(which python2)
