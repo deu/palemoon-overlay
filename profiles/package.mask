@@ -1,3 +1,3 @@
 # Masked because building it with the default compiler produces
 # an unstable build.
->=www-client/palemoon-27
+<www-client/palemoon-28
