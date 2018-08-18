@@ -1,0 +1,656 @@
+diff --git a/build/autoconf/arch.m4 b/build/autoconf/arch.m4
+index 372828393..d1cb95762 100644
+--- a/build/autoconf/arch.m4
++++ b/build/autoconf/arch.m4
+@@ -216,7 +216,7 @@ if test "$CPU_ARCH" = "arm"; then
+ 
+   AC_MSG_CHECKING(ARM version support in compiler)
+   dnl Determine the target ARM architecture (5 for ARMv5, v5T, v5E, etc.; 6 for ARMv6, v6K, etc.)
+-  ARM_ARCH=`${CC-cc} ${CFLAGS} -dM -E - < /dev/null | sed -n 's/.*__ARM_ARCH_\([[0-9]][[0-9]]*\).*/\1/p'`
++  ARM_ARCH=`${CC-cc} ${CFLAGS} -dM -E - < /dev/null | sed -n 's/.*__ARM_ARCH_\([[0-9]][[0-9]]*\).*/\1/p' | head -n 1`
+   AC_MSG_RESULT("$ARM_ARCH")
+ 
+   AC_MSG_CHECKING(for ARM NEON support in compiler)
+diff --git a/config/system-headers b/config/system-headers
+index e01d507f7..0983455d3 100644
+--- a/config/system-headers
++++ b/config/system-headers
+@@ -422,7 +422,6 @@ execinfo.h
+ extras.h
+ fabdef.h
+ fcntl.h
+-features.h
+ fibdef.h
+ File.h
+ filehdr.h
+@@ -1008,7 +1007,6 @@ sys/atomic_op.h
+ sys/bitypes.h
+ sys/byteorder.h
+ syscall.h
+-sys/cdefs.h
+ sys/cfgodm.h
+ sys/elf.h
+ sys/endian.h
+@@ -1066,7 +1064,6 @@ sys/statfs.h
+ sys/stat.h
+ sys/statvfs.h
+ sys/syscall.h
+-sys/sysctl.h
+ sys/sysinfo.h
+ sys/sysmp.h
+ sys/syssgi.h
+diff --git a/gfx/ycbcr/moz.build b/gfx/ycbcr/moz.build
+index 1f0834504..e13f37669 100644
+--- a/gfx/ycbcr/moz.build
++++ b/gfx/ycbcr/moz.build
+@@ -55,7 +55,7 @@ else:
+         'yuv_row_other.cpp',
+     ]
+ 
+-if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['HAVE_ARM_NEON']:
++if CONFIG['HAVE_ARM_NEON']:
+     SOURCES += [
+         'yuv_row_arm.s',
+     ]
+diff --git a/ipc/chromium/src/base/atomicops_internals_arm_gcc.h b/ipc/chromium/src/base/atomicops_internals_arm_gcc.h
+index e838f1bbd..d9e7bd7aa 100644
+--- a/ipc/chromium/src/base/atomicops_internals_arm_gcc.h
++++ b/ipc/chromium/src/base/atomicops_internals_arm_gcc.h
+@@ -12,43 +12,194 @@
+ namespace base {
+ namespace subtle {
+ 
+-// 0xffff0fc0 is the hard coded address of a function provided by
+-// the kernel which implements an atomic compare-exchange. On older
+-// ARM architecture revisions (pre-v6) this may be implemented using
+-// a syscall. This address is stable, and in active use (hard coded)
+-// by at least glibc-2.7 and the Android C library.
+-typedef Atomic32 (*LinuxKernelCmpxchgFunc)(Atomic32 old_value,
+-                                           Atomic32 new_value,
+-                                           volatile Atomic32* ptr);
+-LinuxKernelCmpxchgFunc pLinuxKernelCmpxchg __attribute__((weak)) =
+-    (LinuxKernelCmpxchgFunc) 0xffff0fc0;
+-
+-typedef void (*LinuxKernelMemoryBarrierFunc)(void);
+-LinuxKernelMemoryBarrierFunc pLinuxKernelMemoryBarrier __attribute__((weak)) =
+-    (LinuxKernelMemoryBarrierFunc) 0xffff0fa0;
++// Memory barriers on ARM are funky, but the kernel is here to help:
++//
++// * ARMv5 didn't support SMP, there is no memory barrier instruction at
++//   all on this architecture, or when targeting its machine code.
++//
++// * Some ARMv6 CPUs support SMP. A full memory barrier can be produced by
++//   writing a random value to a very specific coprocessor register.
++//
++// * On ARMv7, the "dmb" instruction is used to perform a full memory
++//   barrier (though writing to the co-processor will still work).
++//   However, on single core devices (e.g. Nexus One, or Nexus S),
++//   this instruction will take up to 200 ns, which is huge, even though
++//   it's completely un-needed on these devices.
++//
++// * There is no easy way to determine at runtime if the device is
++//   single or multi-core. However, the kernel provides a useful helper
++//   function at a fixed memory address (0xffff0fa0), which will always
++//   perform a memory barrier in the most efficient way. I.e. on single
++//   core devices, this is an empty function that exits immediately.
++//   On multi-core devices, it implements a full memory barrier.
++//
++// * This source could be compiled to ARMv5 machine code that runs on a
++//   multi-core ARMv6 or ARMv7 device. In this case, memory barriers
++//   are needed for correct execution. Always call the kernel helper, even
++//   when targeting ARMv5TE.
++//
+ 
++inline void MemoryBarrier() {
++#if defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || \
++    defined(__ARM_ARCH_7R__) || defined(__ARM_ARCH_7M__)
++  __asm__ __volatile__("dmb ish" ::: "memory");
++#elif defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || \
++      defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || \
++      defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__)
++  __asm__ __volatile__("mcr p15,0,r0,c7,c10,5" ::: "memory");
++#elif defined(__linux__) || defined(__ANDROID__)
++  // Note: This is a function call, which is also an implicit compiler barrier.
++  typedef void (*KernelMemoryBarrierFunc)();
++  ((KernelMemoryBarrierFunc)0xffff0fa0)();
++#error MemoryBarrier() is not implemented on this platform.
++#endif
++}
++
++// An ARM toolchain would only define one of these depending on which
++// variant of the target architecture is being used. This tests against
++// any known ARMv6 or ARMv7 variant, where it is possible to directly
++// use ldrex/strex instructions to implement fast atomic operations.
++#if defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || \
++    defined(__ARM_ARCH_7R__) || defined(__ARM_ARCH_7M__) || \
++    defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || \
++    defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || \
++    defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__)
+ 
+ inline Atomic32 NoBarrier_CompareAndSwap(volatile Atomic32* ptr,
+                                          Atomic32 old_value,
+                                          Atomic32 new_value) {
+-  Atomic32 prev_value = *ptr;
++  Atomic32 prev_value;
++  int reloop;
+   do {
+-    if (!pLinuxKernelCmpxchg(old_value, new_value,
+-                             const_cast<Atomic32*>(ptr))) {
+-      return old_value;
+-    }
+-    prev_value = *ptr;
+-  } while (prev_value == old_value);
++    // The following is equivalent to:
++    //
++    //   prev_value = LDREX(ptr)
++    //   reloop = 0
++    //   if (prev_value != old_value)
++    //      reloop = STREX(ptr, new_value)
++    __asm__ __volatile__("    ldrex %0, [%3]\n"
++                         "    mov %1, #0\n"
++                         "    cmp %0, %4\n"
++#ifdef __thumb2__
++                         "    it eq\n"
++#endif
++                         "    strexeq %1, %5, [%3]\n"
++                         : "=&r"(prev_value), "=&r"(reloop), "+m"(*ptr)
++                         : "r"(ptr), "r"(old_value), "r"(new_value)
++                         : "cc", "memory");
++  } while (reloop != 0);
+   return prev_value;
+ }
+ 
++inline Atomic32 Acquire_CompareAndSwap(volatile Atomic32* ptr,
++                                       Atomic32 old_value,
++                                       Atomic32 new_value) {
++  Atomic32 result = NoBarrier_CompareAndSwap(ptr, old_value, new_value);
++  MemoryBarrier();
++  return result;
++}
++
++inline Atomic32 Release_CompareAndSwap(volatile Atomic32* ptr,
++                                       Atomic32 old_value,
++                                       Atomic32 new_value) {
++  MemoryBarrier();
++  return NoBarrier_CompareAndSwap(ptr, old_value, new_value);
++}
++
++inline Atomic32 NoBarrier_AtomicIncrement(volatile Atomic32* ptr,
++                                          Atomic32 increment) {
++  Atomic32 value;
++  int reloop;
++  do {
++    // Equivalent to:
++    //
++    //  value = LDREX(ptr)
++    //  value += increment
++    //  reloop = STREX(ptr, value)
++    //
++    __asm__ __volatile__("    ldrex %0, [%3]\n"
++                         "    add %0, %0, %4\n"
++                         "    strex %1, %0, [%3]\n"
++                         : "=&r"(value), "=&r"(reloop), "+m"(*ptr)
++                         : "r"(ptr), "r"(increment)
++                         : "cc", "memory");
++  } while (reloop);
++  return value;
++}
++
++inline Atomic32 Barrier_AtomicIncrement(volatile Atomic32* ptr,
++                                        Atomic32 increment) {
++  // TODO(digit): Investigate if it's possible to implement this with
++  // a single MemoryBarrier() operation between the LDREX and STREX.
++  // See http://crbug.com/246514
++  MemoryBarrier();
++  Atomic32 result = NoBarrier_AtomicIncrement(ptr, increment);
++  MemoryBarrier();
++  return result;
++}
++
++inline Atomic32 NoBarrier_AtomicExchange(volatile Atomic32* ptr,
++                                         Atomic32 new_value) {
++  Atomic32 old_value;
++  int reloop;
++  do {
++    // old_value = LDREX(ptr)
++    // reloop = STREX(ptr, new_value)
++    __asm__ __volatile__("   ldrex %0, [%3]\n"
++                         "   strex %1, %4, [%3]\n"
++                         : "=&r"(old_value), "=&r"(reloop), "+m"(*ptr)
++                         : "r"(ptr), "r"(new_value)
++                         : "cc", "memory");
++  } while (reloop != 0);
++  return old_value;
++}
++
++// This tests against any known ARMv5 variant.
++#elif defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5T__) || \
++      defined(__ARM_ARCH_5TE__) || defined(__ARM_ARCH_5TEJ__)
++
++// The kernel also provides a helper function to perform an atomic
++// compare-and-swap operation at the hard-wired address 0xffff0fc0.
++// On ARMv5, this is implemented by a special code path that the kernel
++// detects and treats specially when thread pre-emption happens.
++// On ARMv6 and higher, it uses LDREX/STREX instructions instead.
++//
++// Note that this always perform a full memory barrier, there is no
++// need to add calls MemoryBarrier() before or after it. It also
++// returns 0 on success, and 1 on exit.
++//
++// Available and reliable since Linux 2.6.24. Both Android and ChromeOS
++// use newer kernel revisions, so this should not be a concern.
++namespace {
++
++inline int LinuxKernelCmpxchg(Atomic32 old_value,
++                              Atomic32 new_value,
++                              volatile Atomic32* ptr) {
++  typedef int (*KernelCmpxchgFunc)(Atomic32, Atomic32, volatile Atomic32*);
++  return ((KernelCmpxchgFunc)0xffff0fc0)(old_value, new_value, ptr);
++}
++
++}  // namespace
++
++inline Atomic32 NoBarrier_CompareAndSwap(volatile Atomic32* ptr,
++                                         Atomic32 old_value,
++                                         Atomic32 new_value) {
++  Atomic32 prev_value;
++  for (;;) {
++    prev_value = *ptr;
++    if (prev_value != old_value)
++      return prev_value;
++    if (!LinuxKernelCmpxchg(old_value, new_value, ptr))
++      return old_value;
++  }
++}
++
+ inline Atomic32 NoBarrier_AtomicExchange(volatile Atomic32* ptr,
+                                          Atomic32 new_value) {
+   Atomic32 old_value;
+   do {
+     old_value = *ptr;
+-  } while (pLinuxKernelCmpxchg(old_value, new_value,
+-                               const_cast<Atomic32*>(ptr)));
++  } while (LinuxKernelCmpxchg(old_value, new_value, ptr));
+   return old_value;
+ }
+ 
+@@ -63,36 +214,57 @@ inline Atomic32 Barrier_AtomicIncrement(volatile Atomic32* ptr,
+     // Atomic exchange the old value with an incremented one.
+     Atomic32 old_value = *ptr;
+     Atomic32 new_value = old_value + increment;
+-    if (pLinuxKernelCmpxchg(old_value, new_value,
+-                            const_cast<Atomic32*>(ptr)) == 0) {
++    if (!LinuxKernelCmpxchg(old_value, new_value, ptr)) {
+       // The exchange took place as expected.
+       return new_value;
+     }
+     // Otherwise, *ptr changed mid-loop and we need to retry.
+   }
+-
+ }
+ 
+ inline Atomic32 Acquire_CompareAndSwap(volatile Atomic32* ptr,
+                                        Atomic32 old_value,
+                                        Atomic32 new_value) {
+-  return NoBarrier_CompareAndSwap(ptr, old_value, new_value);
++  Atomic32 prev_value;
++  for (;;) {
++    prev_value = *ptr;
++    if (prev_value != old_value) {
++      // Always ensure acquire semantics.
++      MemoryBarrier();
++      return prev_value;
++    }
++    if (!LinuxKernelCmpxchg(old_value, new_value, ptr))
++      return old_value;
++  }
+ }
+ 
+ inline Atomic32 Release_CompareAndSwap(volatile Atomic32* ptr,
+                                        Atomic32 old_value,
+                                        Atomic32 new_value) {
+-  return NoBarrier_CompareAndSwap(ptr, old_value, new_value);
++  // This could be implemented as:
++  //    MemoryBarrier();
++  //    return NoBarrier_CompareAndSwap();
++  //
++  // But would use 3 barriers per succesful CAS. To save performance,
++  // use Acquire_CompareAndSwap(). Its implementation guarantees that:
++  // - A succesful swap uses only 2 barriers (in the kernel helper).
++  // - An early return due to (prev_value != old_value) performs
++  //   a memory barrier with no store, which is equivalent to the
++  //   generic implementation above.
++  return Acquire_CompareAndSwap(ptr, old_value, new_value);
+ }
+ 
++#else
++#  error "Your CPU's ARM architecture is not supported yet"
++#endif
++
++// NOTE: Atomicity of the following load and store operations is only
++// guaranteed in case of 32-bit alignement of |ptr| values.
++
+ inline void NoBarrier_Store(volatile Atomic32* ptr, Atomic32 value) {
+   *ptr = value;
+ }
+ 
+-inline void MemoryBarrier() {
+-  pLinuxKernelMemoryBarrier();
+-}
+-
+ inline void Acquire_Store(volatile Atomic32* ptr, Atomic32 value) {
+   *ptr = value;
+   MemoryBarrier();
+@@ -103,9 +275,7 @@ inline void Release_Store(volatile Atomic32* ptr, Atomic32 value) {
+   *ptr = value;
+ }
+ 
+-inline Atomic32 NoBarrier_Load(volatile const Atomic32* ptr) {
+-  return *ptr;
+-}
++inline Atomic32 NoBarrier_Load(volatile const Atomic32* ptr) { return *ptr; }
+ 
+ inline Atomic32 Acquire_Load(volatile const Atomic32* ptr) {
+   Atomic32 value = *ptr;
+@@ -118,7 +288,6 @@ inline Atomic32 Release_Load(volatile const Atomic32* ptr) {
+   return *ptr;
+ }
+ 
+-} // namespace base::subtle
+-} // namespace base
++} }  // namespace base::subtle
+ 
+ #endif  // BASE_ATOMICOPS_INTERNALS_ARM_GCC_H_
+diff --git a/ipc/chromium/src/third_party/libevent/linux/event2/event-config.h b/ipc/chromium/src/third_party/libevent/linux/event2/event-config.h
+index f8e4e63e1..ea7d0f531 100644
+--- a/ipc/chromium/src/third_party/libevent/linux/event2/event-config.h
++++ b/ipc/chromium/src/third_party/libevent/linux/event2/event-config.h
+@@ -262,7 +262,7 @@
+ /* #undef _EVENT_HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY */
+ 
+ /* Define to 1 if you have the `sysctl' function. */
+-#define _EVENT_HAVE_SYSCTL 1
++#undef _EVENT_HAVE_SYSCTL
+ 
+ /* Define to 1 if you have the <sys/devpoll.h> header file. */
+ /* #undef _EVENT_HAVE_SYS_DEVPOLL_H */
+@@ -301,7 +301,7 @@
+ #define _EVENT_HAVE_SYS_STAT_H 1
+ 
+ /* Define to 1 if you have the <sys/sysctl.h> header file. */
+-#define _EVENT_HAVE_SYS_SYSCTL_H 1
++#undef _EVENT_HAVE_SYS_SYSCTL_H
+ 
+ /* Define to 1 if you have the <sys/time.h> header file. */
+ #define _EVENT_HAVE_SYS_TIME_H 1
+diff --git a/js/src/jsnum.cpp b/js/src/jsnum.cpp
+index 1628a70ae..a0e425f48 100644
+--- a/js/src/jsnum.cpp
++++ b/js/src/jsnum.cpp
+@@ -1075,7 +1075,7 @@ static JSConstDoubleSpec number_constants[] = {
+ void
+ js::FIX_FPU()
+ {
+-#if (defined __GNUC__ && defined __i386__) || \
++#if (defined __GLIBC__ && defined __i386__) || \
+     (defined __SUNPRO_CC && defined __i386)
+     short control;
+     asm("fstcw %0" : "=m" (control) : );
+diff --git a/js/src/vm/PosixNSPR.cpp b/js/src/vm/PosixNSPR.cpp
+index 9ec384935..ac363a16f 100644
+--- a/js/src/vm/PosixNSPR.cpp
++++ b/js/src/vm/PosixNSPR.cpp
+@@ -155,8 +155,10 @@ PR_SetCurrentThreadName(const char* name)
+     result = 0;
+ #elif defined(__NetBSD__)
+     result = pthread_setname_np(pthread_self(), "%s", (void*)name);
+-#else
++#elif defined(__GLIBC__)
+     result = pthread_setname_np(pthread_self(), name);
++#else
++  result = 0;
+ #endif
+     if (result)
+         return PR_FAILURE;
+diff --git a/media/libstagefright/system/core/include/cutils/properties.h b/media/libstagefright/system/core/include/cutils/properties.h
+index c380d5d50..7a96861c5 100644
+--- a/media/libstagefright/system/core/include/cutils/properties.h
++++ b/media/libstagefright/system/core/include/cutils/properties.h
+@@ -17,7 +17,6 @@
+ #ifndef __CUTILS_PROPERTIES_H
+ #define __CUTILS_PROPERTIES_H
+ 
+-#include <sys/cdefs.h>
+ #include <stddef.h>
+ 
+ #ifdef __cplusplus
+diff --git a/memory/mozalloc/mozalloc.h b/memory/mozalloc/mozalloc.h
+index 2b370ec25..06a700245 100644
+--- a/memory/mozalloc/mozalloc.h
++++ b/memory/mozalloc/mozalloc.h
+@@ -12,10 +12,17 @@
+  * https://bugzilla.mozilla.org/show_bug.cgi?id=427099
+  */
+ 
+-#include <stdlib.h>
+-#include <string.h>
+ #if defined(__cplusplus)
+ #  include <new>
++// Since libstdc++ 6, including the C headers (e.g. stdlib.h) instead of the
++// corresponding C++ header (e.g. cstdlib) can cause confusion in C++ code
++// using things defined there. Specifically, with stdlib.h, the use of abs()
++// in gfx/graphite2/src/inc/UtfCodec.h somehow ends up picking the wrong abs()
++#  include <cstdlib>
++#  include <cstring>
++#else
++#  include <stdlib.h>
++#  include <string.h>
+ #endif
+ #include "xpcom-config.h"
+ 
+diff --git a/mfbt/UniquePtrExtensions.h b/mfbt/UniquePtrExtensions.h
+new file mode 100644
+index 000000000..d94f33eea
+--- /dev/null
++++ b/mfbt/UniquePtrExtensions.h
+@@ -0,0 +1,57 @@
++/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* vim: set ts=8 sts=2 et sw=2 tw=80: */
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++/* Useful extensions to UniquePtr. */
++
++#ifndef mozilla_UniquePtrExtensions_h
++#define mozilla_UniquePtrExtensions_h
++
++#include "mozilla/fallible.h"
++#include "mozilla/UniquePtr.h"
++
++namespace mozilla {
++
++/**
++ * MakeUniqueFallible works exactly like MakeUnique, except that the memory
++ * allocation performed is done fallibly, i.e. it can return nullptr.
++ */
++template<typename T, typename... Args>
++typename detail::UniqueSelector<T>::SingleObject
++MakeUniqueFallible(Args&&... aArgs)
++{
++  return UniquePtr<T>(new (fallible) T(Forward<Args>(aArgs)...));
++}
++
++template<typename T>
++typename detail::UniqueSelector<T>::UnknownBound
++MakeUniqueFallible(decltype(sizeof(int)) aN)
++{
++  typedef typename RemoveExtent<T>::Type ArrayType;
++  return UniquePtr<T>(new (fallible) ArrayType[aN]());
++}
++
++template<typename T, typename... Args>
++typename detail::UniqueSelector<T>::KnownBound
++MakeUniqueFallible(Args&&... aArgs) = delete;
++
++namespace detail {
++
++template<typename T>
++struct FreePolicy
++{
++  void operator()(const void* ptr) {
++    free(const_cast<void*>(ptr));
++  }
++};
++
++} // namespace detail
++
++template<typename T>
++using UniqueFreePtr = UniquePtr<T, detail::FreePolicy<T>>;
++
++} // namespace mozilla
++
++#endif // mozilla_UniquePtrExtensions_h
+diff --git a/mfbt/moz.build b/mfbt/moz.build
+index 0b27eefaf..c97294957 100644
+--- a/mfbt/moz.build
++++ b/mfbt/moz.build
+@@ -79,6 +79,7 @@ EXPORTS.mozilla = [
+     'Types.h',
+     'TypeTraits.h',
+     'UniquePtr.h',
++    'UniquePtrExtensions.h',
+     'Vector.h',
+     'WeakPtr.h',
+     'unused.h',
+diff --git a/mozilla-config.h.in b/mozilla-config.h.in
+index c427e2aa8..67bf00772 100644
+--- a/mozilla-config.h.in
++++ b/mozilla-config.h.in
+@@ -56,7 +56,7 @@
+  * HUNSPELL_STATIC is defined in extensions/spellcheck/hunspell/src/Makefile.in,
+  * unless --enable-system-hunspell is defined.
+  */
+-#if defined(HUNSPELL_STATIC)
++#if 0
+ #include "hunspell_alloc_hooks.h"
+ #include "hunspell_fopen_hooks.h"
+ #endif
+diff --git a/netwerk/streamconv/converters/nsHTTPCompressConv.cpp b/netwerk/streamconv/converters/nsHTTPCompressConv.cpp
+index 3e42f6d25..31ea1e2f7 100644
+--- a/netwerk/streamconv/converters/nsHTTPCompressConv.cpp
++++ b/netwerk/streamconv/converters/nsHTTPCompressConv.cpp
+@@ -15,6 +15,7 @@
+ #include "nsThreadUtils.h"
+ #include "mozilla/Preferences.h"
+ #include "nsIForcePendingChannel.h"
++#include "mozilla/UniquePtrExtensions.h"
+ 
+ // brotli headers
+ #include "state.h"
+@@ -143,9 +144,8 @@ nsHTTPCompressConv::BrotliHandler(nsIInputStream *stream, void *closure, const c
+   nsHTTPCompressConv *self = static_cast<nsHTTPCompressConv *>(closure);
+   *countRead = 0;
+ 
+-  const uint32_t kOutSize = 128 * 1024; // just a chunk size, we call in a loop
+-  unsigned char outBuffer[kOutSize];
+-  unsigned char *outPtr;
++  const size_t kOutSize = 128 * 1024; // just a chunk size, we call in a loop
++  uint8_t *outPtr;
+   size_t outSize;
+   size_t avail = aAvail;
+   BrotliResult res;
+@@ -155,6 +155,7 @@ nsHTTPCompressConv::BrotliHandler(nsIInputStream *stream, void *closure, const c
+     return NS_OK;
+   }
+ 
++  auto outBuffer = MakeUniqueFallible<uint8_t[]>(kOutSize);
+   if (outBuffer == nullptr) {
+     self->mBrotli->mStatus = NS_ERROR_OUT_OF_MEMORY;
+     return self->mBrotli->mStatus;
+@@ -162,7 +163,7 @@ nsHTTPCompressConv::BrotliHandler(nsIInputStream *stream, void *closure, const c
+ 
+   do {
+     outSize = kOutSize;
+-    outPtr = outBuffer;
++    outPtr = outBuffer.get();
+ 
+     // brotli api is documented in brotli/dec/decode.h and brotli/dec/decode.c
+ 
+@@ -189,7 +190,7 @@ nsHTTPCompressConv::BrotliHandler(nsIInputStream *stream, void *closure, const c
+       nsresult rv = self->do_OnDataAvailable(self->mBrotli->mRequest,
+                                              self->mBrotli->mContext,
+                                              self->mBrotli->mSourceOffset,
+-                                             reinterpret_cast<const char *>(outBuffer),
++                                             reinterpret_cast<const char *>(outBuffer.get()),
+                                              outSize);
+       if (NS_FAILED(rv)) {
+         self->mBrotli->mStatus = rv;
+diff --git a/security/sandbox/chromium/sandbox/linux/seccomp-bpf/trap.cc b/security/sandbox/chromium/sandbox/linux/seccomp-bpf/trap.cc
+index dce6b7b85..5b2e2cc02 100644
+--- a/security/sandbox/chromium/sandbox/linux/seccomp-bpf/trap.cc
++++ b/security/sandbox/chromium/sandbox/linux/seccomp-bpf/trap.cc
+@@ -23,6 +23,11 @@
+ #include "sandbox/linux/services/android_ucontext.h"
+ #endif
+ 
++// musl libc defines siginfo_t __si_fields instead of _sifields
++#if defined(OS_LINUX) && !defined(__GLIBC__)
++#define _sifields __si_fields
++#endif
++
+ namespace {
+ 
+ struct arch_sigsys {
+diff --git a/toolkit/modules/CertUtils.jsm b/toolkit/modules/CertUtils.jsm
+index 00a2c5293..309412ea1 100644
+--- a/toolkit/modules/CertUtils.jsm
++++ b/toolkit/modules/CertUtils.jsm
+@@ -174,7 +174,9 @@ this.checkCert =
+ }
+ 
+ function isBuiltinToken(tokenName) {
+-  return tokenName == "Builtin Object Token";
++  return tokenName == "Builtin Object Token" ||
++         tokenName == "Default Trust" ||
++         tokenName == "System Trust";
+ }
+ 
+ /**
+diff --git a/toolkit/xre/nsSigHandlers.cpp b/toolkit/xre/nsSigHandlers.cpp
+index a44be5157..236f2489f 100644
+--- a/toolkit/xre/nsSigHandlers.cpp
++++ b/toolkit/xre/nsSigHandlers.cpp
+@@ -14,6 +14,7 @@
+ 
+ #include <signal.h>
+ #include <stdio.h>
++#include <stdint.h>
+ #include <string.h>
+ #include "prthread.h"
+ #include "plstr.h"
+@@ -37,6 +38,9 @@
+ #include <ucontext.h>
+ #endif
+ 
++typedef uint16_t __uint16_t;
++typedef uint32_t __uint32_t;
++
+ static char _progname[1024] = "huh?";
+ static unsigned int _gdb_sleep_duration = 300;
+ 
+diff --git a/xpcom/io/nsLocalFileUnix.cpp b/xpcom/io/nsLocalFileUnix.cpp
+index c7b6b2a93..378b37d68 100644
+--- a/xpcom/io/nsLocalFileUnix.cpp
++++ b/xpcom/io/nsLocalFileUnix.cpp
+@@ -77,6 +77,10 @@ static nsresult MacErrorMapper(OSErr inErr);
+ #include "nsTraceRefcnt.h"
+ #include "nsHashKeys.h"
+ 
++#ifndef BLOCK_SIZE
++#define BLOCK_SIZE 1024 /* kernel block size */
++#endif
++
+ using namespace mozilla;
+ 
+ #define ENSURE_STAT_CACHE()                     \
