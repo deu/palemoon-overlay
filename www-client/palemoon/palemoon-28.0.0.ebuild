@@ -23,6 +23,7 @@ IUSE="
 	-valgrind
 	dbus
 	-necko-wifi
+	gnome
 	+gtk2
 	-gtk3
 	pulseaudio
@@ -57,6 +58,8 @@ RDEPEND="
 		>=sys-apps/dbus-0.60
 		>=dev-libs/dbus-glib-0.60
 	)
+
+	gnome? ( gnome-base/gconf )
 
 	gtk2? ( >=x11-libs/gtk+-2.18.0:2 )
 	gtk3? ( >=x11-libs/gtk+-3.4.0:3 )
@@ -138,6 +141,10 @@ src_configure() {
 
 	if ! use dbus; then
 		mozconfig_disable dbus
+	fi
+
+	if ! use gnome; then
+		mozconfig_disable gconf
 	fi
 
 	if use gtk2; then
