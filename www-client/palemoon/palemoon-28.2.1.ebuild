@@ -1,9 +1,9 @@
 EAPI=6
 
-REQUIRED_BUILDSPACE='7G'
-GCC_SUPPORTED_VERSIONS="4.7 4.9"
+REQUIRED_BUILDSPACE='9G'
+GCC_SUPPORTED_VERSIONS="4.9 5.4 7.3"
 
-inherit palemoon-4 git-r3 eutils flag-o-matic pax-utils
+inherit palemoon-5 git-r3 eutils flag-o-matic pax-utils
 
 KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
@@ -18,27 +18,19 @@ IUSE="
 	cpu_flags_x86_sse2
 	threads
 	debug
-	-system-libevent
-	-system-zlib
-	-system-bzip2
-	-system-libwebp
-	-system-libvpx
-	-system-sqlite
-	+shared-js
 	+jemalloc
 	-valgrind
 	dbus
 	-necko-wifi
+	gnome
 	+gtk2
 	-gtk3
 	pulseaudio
 	+devtools
 "
 
-EGIT_REPO_URI="https://github.com/MoonchildProductions/Pale-Moon.git"
-GIT_TAG="${PV}_Release"
-
-RESTRICT="mirror"
+EGIT_REPO_URI="https://github.com/MoonchildProductions/UXP.git"
+EGIT_COMMIT="PM${PV}_Release"
 
 DEPEND="
 	>=sys-devel/autoconf-2.13:2.1
@@ -53,23 +45,16 @@ RDEPEND="
 	media-libs/freetype
 	media-libs/fontconfig
 
-	system-libevent? ( dev-libs/libevent )
-	system-zlib?     ( sys-libs/zlib )
-	system-bzip2?    ( app-arch/bzip2 )
-	system-libwebp?  ( media-libs/libwebp )
-	system-libvpx?   ( >=media-libs/libvpx-1.4.0 )
-	system-sqlite?   ( >=dev-db/sqlite-3.21.0[secure-delete] )
-
 	optimize? ( sys-libs/glibc )
 
 	valgrind? ( dev-util/valgrind )
-
-	shared-js? ( virtual/libffi )
 
 	dbus? (
 		>=sys-apps/dbus-0.60
 		>=dev-libs/dbus-glib-0.60
 	)
+
+	gnome? ( gnome-base/gconf )
 
 	gtk2? ( >=x11-libs/gtk+-2.18.0:2 )
 	gtk3? ( >=x11-libs/gtk+-3.4.0:3 )
@@ -83,24 +68,11 @@ RDEPEND="
 "
 
 REQUIRED_USE="
-	official-branding? (
-		!system-libevent
-		!system-zlib
-		!system-bzip2
-		!system-libwebp
-		!system-libvpx
-		!system-sqlite
-	)
 	optimize? ( !debug )
 	jemalloc? ( !valgrind )
 	^^ ( gtk2 gtk3 )
 	necko-wifi? ( dbus )
 "
-
-src_unpack() {
-	git-r3_fetch ${EGIT_REPO_URI} refs/tags/${GIT_TAG}
-	git-r3_checkout
-}
 
 src_prepare() {
 	# Ensure that our plugins dir is enabled by default:
@@ -118,19 +90,12 @@ src_configure() {
 	# Basic configuration:
 	mozconfig_init
 
-	mozconfig_disable installer updater install-strip
+	mozconfig_disable updater install-strip
 
 	if use official-branding; then
 		official-branding_warning
 		mozconfig_enable official-branding
 	fi
-
-	if use system-libevent; then mozconfig_with system-libevent; fi
-	if use system-zlib;     then mozconfig_with system-zlib; fi
-	if use system-bzip2;    then mozconfig_with system-bz2; fi
-	if use system-libwebp;  then mozconfig_with system-webp; fi
-	if use system-libvpx;   then mozconfig_with system-libvpx; fi
-	if use system-sqlite;   then mozconfig_enable system-sqlite; fi
 
 	if use optimize; then
 		O='-O2'
@@ -152,12 +117,8 @@ src_configure() {
 		mozconfig_enable "debug-symbols=\"-gdwarf-2\""
 	fi
 
-	if use shared-js; then
-		mozconfig_enable shared-js
-	fi
-
 	if use jemalloc; then
-		mozconfig_enable jemalloc jemalloc-lib
+		mozconfig_enable jemalloc
 	fi
 
 	if use valgrind; then
@@ -166,6 +127,10 @@ src_configure() {
 
 	if ! use dbus; then
 		mozconfig_disable dbus
+	fi
+
+	if ! use gnome; then
+		mozconfig_disable gconf
 	fi
 
 	if use gtk2; then
@@ -188,6 +153,12 @@ src_configure() {
 		mozconfig_enable devtools
 	fi
 
+	# Enabling this causes xpcshell to hang during the packaging process,
+	# so disabling it until the cause can be tracked down. It most likely
+	# has something to do with the sandbox since the issue goes away when
+	# building with FEATURES="-sandbox -usersandbox".
+	mozconfig_disable precompiled-startupcache
+
 	# Mainly to prevent system's NSS/NSPR from taking precedence over
 	# the built-in ones:
 	append-ldflags -Wl,-rpath="$EPREFIX/usr/$(get_libdir)/palemoon"
@@ -206,6 +177,11 @@ src_configure() {
 }
 
 src_compile() {
+	# Prevents portage from setting its own XARGS which messes with the
+	# Pale Moon build system checks:
+	# See: https://gitweb.gentoo.org/proj/portage.git/tree/bin/isolated-functions.sh
+	export XARGS="$(which xargs)"
+
 	python2 mach build || die
 }
 

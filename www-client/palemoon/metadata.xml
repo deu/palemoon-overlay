@@ -11,21 +11,6 @@
 	<flag name="official-branding">Enable official branding</flag>
 	<flag name="optimize">Enable compiler optimization</flag>
 	<flag name="valgrind">Enable Valgrind integration hooks</flag>
-	<flag name="webrtc">Enable support for WebRTC</flag>
-	<flag name="system-bzip2">Use the system-wide <pkg>app-arch/bzip2</pkg>
-		instead of bundled.</flag>
-	<flag name="system-hunspell">Use the system-wide <pkg>app-text/hunspell</pkg>
-		instead of bundled.</flag>
-	<flag name="system-libevent">Use the system-wide <pkg>dev-libs/libevent</pkg>
-		instead of bundled.</flag>
-	<flag name="system-libvpx">Use the system-wide <pkg>media-libs/libvpx</pkg>
-		instead of bundled.</flag>
-	<flag name="system-libwebp">Use the system-wide <pkg>media-libs/libwebp</pkg>
-		instead of bundled.</flag>
-	<flag name="system-sqlite">Use the system-wide <pkg>dev-db/sqlite</pkg>
-		installation with secure-delete enabled</flag>
-	<flag name="system-zlib">Use the system-wide <pkg>sys-libs/zlib</pkg>
-		instead of bundled.</flag>
 </use>
 </pkgmetadata>
 
