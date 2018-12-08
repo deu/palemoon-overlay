@@ -18,7 +18,6 @@ IUSE="
 	cpu_flags_x86_sse2
 	threads
 	debug
-	+shared-js
 	+jemalloc
 	-valgrind
 	dbus
@@ -31,9 +30,7 @@ IUSE="
 "
 
 EGIT_REPO_URI="https://github.com/MoonchildProductions/UXP.git"
-GIT_TAG="PM${PV}_Release"
-
-RESTRICT="mirror"
+EGIT_COMMIT="PM${PV}_Release"
 
 DEPEND="
 	>=sys-devel/autoconf-2.13:2.1
@@ -51,8 +48,6 @@ RDEPEND="
 	optimize? ( sys-libs/glibc )
 
 	valgrind? ( dev-util/valgrind )
-
-	shared-js? ( virtual/libffi )
 
 	dbus? (
 		>=sys-apps/dbus-0.60
@@ -78,11 +73,6 @@ REQUIRED_USE="
 	^^ ( gtk2 gtk3 )
 	necko-wifi? ( dbus )
 "
-
-src_unpack() {
-	git-r3_fetch ${EGIT_REPO_URI} refs/tags/${GIT_TAG}
-	git-r3_checkout
-}
 
 src_prepare() {
 	# Ensure that our plugins dir is enabled by default:
@@ -125,10 +115,6 @@ src_configure() {
 	if use debug; then
 		mozconfig_var MOZ_DEBUG_SYMBOLS 1
 		mozconfig_enable "debug-symbols=\"-gdwarf-2\""
-	fi
-
-	if ! use shared-js; then
-		mozconfig_disable shared-js
 	fi
 
 	if use jemalloc; then
