@@ -18,7 +18,6 @@ IUSE="
 	cpu_flags_x86_sse2
 	threads
 	debug
-	+shared-js
 	+jemalloc
 	-valgrind
 	dbus
@@ -49,8 +48,6 @@ RDEPEND="
 	optimize? ( sys-libs/glibc )
 
 	valgrind? ( dev-util/valgrind )
-
-	shared-js? ( virtual/libffi )
 
 	dbus? (
 		>=sys-apps/dbus-0.60
@@ -118,10 +115,6 @@ src_configure() {
 	if use debug; then
 		mozconfig_var MOZ_DEBUG_SYMBOLS 1
 		mozconfig_enable "debug-symbols=\"-gdwarf-2\""
-	fi
-
-	if ! use shared-js; then
-		mozconfig_disable shared-js
 	fi
 
 	if use jemalloc; then
