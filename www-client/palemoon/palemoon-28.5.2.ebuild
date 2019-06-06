@@ -1,7 +1,7 @@
 EAPI=6
 
 REQUIRED_BUILDSPACE='9G'
-GCC_SUPPORTED_VERSIONS="4.9 5.4 7.3"
+GCC_SUPPORTED_VERSIONS="4.9 5.4 7.3 8.2 8.3"
 
 inherit palemoon-5 git-r3 eutils flag-o-matic pax-utils
 
@@ -90,7 +90,7 @@ src_configure() {
 	# Basic configuration:
 	mozconfig_init
 
-	mozconfig_disable updater install-strip
+	mozconfig_disable updater install-strip accessibility
 
 	if use official-branding; then
 		official-branding_warning
