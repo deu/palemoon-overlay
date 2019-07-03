@@ -2,7 +2,7 @@ EAPI=6
 
 inherit palemoon-bin-0 eutils pax-utils fdo-mime gnome2-utils
 
-KEYWORDS="~x86 ~amd64"
+KEYWORDS="~x86 amd64"
 DESCRIPTION="Pale Moon Web Browser"
 HOMEPAGE="https://www.palemoon.org/"
 
