@@ -13,8 +13,8 @@ IUSE="startup-notification"
 BIN_PN="${PN/-bin/}"
 RESTRICT="strip mirror"
 SRC_URI="
-	amd64? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-x86_64.tar.bz2 )
-	x86? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-i686.tar.bz2 )"
+	amd64? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-x86_64.tar.xz )
+	x86? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-i686.tar.xz )"
 
 DEPEND="
 	dev-util/patchelf
