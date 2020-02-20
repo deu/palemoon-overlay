@@ -1,7 +1,7 @@
 EAPI=6
 
 REQUIRED_BUILDSPACE='9G'
-GCC_SUPPORTED_VERSIONS="4.9 5.4 7.3 8.2 8.3"
+GCC_SUPPORTED_VERSIONS="4.9 5.4 7.3 8.2 8.3 9.2"
 
 inherit palemoon-5 git-r3 eutils flag-o-matic pax-utils
 
@@ -199,7 +199,7 @@ src_install() {
 	# Gotta create the package, unpack it and manually install the files
 	# from there not to miss anything (e.g. the statusbar extension):
 	einfo "Creating the package..."
-	python2 mach package || die
+	python2 mach mozpackage || die
 	local extracted_dir="${T}/package"
 	mkdir -p "${extracted_dir}"
 	cd "${extracted_dir}"
