@@ -29,8 +29,8 @@ IUSE="
 	+devtools
 "
 
-EGIT_REPO_URI="https://github.com/MoonchildProductions/UXP.git"
-EGIT_COMMIT="PM${PV}_Release"
+EGIT_REPO_URI="https://github.com/MoonchildProductions/Pale-Moon.git"
+EGIT_COMMIT="${PV}_Release"
 
 DEPEND="
 	>=sys-devel/autoconf-2.13:2.1
@@ -77,10 +77,10 @@ REQUIRED_USE="
 src_prepare() {
 	# Ensure that our plugins dir is enabled by default:
 	sed -i -e "s:/usr/lib/mozilla/plugins:/usr/lib/nsbrowser/plugins:" \
-		"${S}/xpcom/io/nsAppFileLocationProvider.cpp" \
+		"${S}/platform/xpcom/io/nsAppFileLocationProvider.cpp" \
 		|| die "sed failed to replace plugin path for 32bit!"
 	sed -i -e "s:/usr/lib64/mozilla/plugins:/usr/lib64/nsbrowser/plugins:" \
-		"${S}/xpcom/io/nsAppFileLocationProvider.cpp" \
+		"${S}/platform/xpcom/io/nsAppFileLocationProvider.cpp" \
 		|| die "sed failed to replace plugin path for 64bit!"
 
 	default
@@ -161,7 +161,7 @@ src_configure() {
 
 	# Mainly to prevent system's NSS/NSPR from taking precedence over
 	# the built-in ones:
-	append-ldflags -Wl,-rpath="$EPREFIX/usr/$(get_libdir)/palemoon"
+	append-ldflags -Wl,-rpath="${EPREFIX}/usr/$(get_libdir)/palemoon"
 
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
 	mozconfig_var PYTHON $(which python2)
@@ -182,7 +182,7 @@ src_compile() {
 	# See: https://gitweb.gentoo.org/proj/portage.git/tree/bin/isolated-functions.sh
 	export XARGS="$(which xargs)"
 
-	python2 mach build || die
+	python2 "${S}/platform/mach" build || die
 }
 
 src_install() {
@@ -199,7 +199,7 @@ src_install() {
 	# Gotta create the package, unpack it and manually install the files
 	# from there not to miss anything (e.g. the statusbar extension):
 	einfo "Creating the package..."
-	python2 mach mozpackage || die
+	python2 "${S}/platform/mach" mozpackage || die
 	local extracted_dir="${T}/package"
 	mkdir -p "${extracted_dir}"
 	cd "${extracted_dir}"
