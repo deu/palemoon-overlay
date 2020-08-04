@@ -39,7 +39,7 @@ RDEPEND="
 	x11-libs/libXt
 	x11-libs/pango
 	virtual/freedesktop-icon-theme
-	virtual/ffmpeg[x264]
+	media-video/ffmpeg[x264]
 "
 
 QA_PREBUILT="
