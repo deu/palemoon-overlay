@@ -159,8 +159,7 @@ src_configure() {
 	# building with FEATURES="-sandbox -usersandbox".
 	mozconfig_disable precompiled-startupcache
 
-	# In Palemoon versions beyond 28.12.0, only Palemoon-specific extensions
-	# work, unless the phoenix-extensions flag is enabled.
+	# Allow installation of Firefox GUID targeted extensions:
 	mozconfig_enable phoenix-extensions
 
 	# Mainly to prevent system's NSS/NSPR from taking precedence over
