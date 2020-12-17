@@ -1,4 +1,4 @@
-inherit check-reqs gnome2-utils fdo-mime toolchain-funcs
+inherit check-reqs gnome2-utils toolchain-funcs xdg-utils
 
 EXPORT_FUNCTIONS pkg_pretend pkg_preinst pkg_postinst pkg_postrm pkg_setup
 
@@ -30,7 +30,7 @@ palemoon-5_pkg_preinst() {
 
 palemoon-5_pkg_postinst() {
 	# Update mimedb for the new .desktop file:
-	fdo-mime_desktop_database_update
+	xdg_desktop_database_update
 	gnome2_icon_cache_update
 }
 

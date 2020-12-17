@@ -1,4 +1,4 @@
-inherit gnome2-utils fdo-mime
+inherit gnome2-utils xdg-utils
 
 pkg_preinst() {
 	gnome2_icon_savelist
@@ -6,7 +6,7 @@ pkg_preinst() {
 
 pkg_postinst() {
 	# Update mimedb for the new .desktop file:
-	fdo-mime_desktop_database_update
+	xdg_desktop_database_update
 	gnome2_icon_cache_update
 }
 
