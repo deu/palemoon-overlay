@@ -1,8 +1,8 @@
 EAPI=6
 
-inherit palemoon-bin-0 eutils pax-utils fdo-mime gnome2-utils
+inherit palemoon-bin-0 eutils pax-utils gnome2-utils xdg-utils
 
-KEYWORDS="~x86 amd64"
+KEYWORDS="amd64"
 DESCRIPTION="Pale Moon Web Browser"
 HOMEPAGE="https://www.palemoon.org/"
 
@@ -13,8 +13,8 @@ IUSE="startup-notification"
 BIN_PN="${PN/-bin/}"
 RESTRICT="strip mirror"
 SRC_URI="
-	amd64? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-x86_64.tar.xz )
-	x86? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-i686.tar.xz )"
+	amd64? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-x86_64-gtk2.tar.xz )
+"
 
 DEPEND="
 	dev-util/patchelf
