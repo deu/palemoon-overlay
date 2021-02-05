@@ -2,18 +2,20 @@ EAPI=6
 
 inherit palemoon-bin-0 eutils pax-utils gnome2-utils xdg-utils
 
-KEYWORDS="amd64"
+KEYWORDS="-* amd64"
 DESCRIPTION="Pale Moon Web Browser"
 HOMEPAGE="https://www.palemoon.org/"
 
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
-IUSE="startup-notification"
+IUSE="gtk2 gtk3 startup-notification"
+REQUIRED_USE="^^ ( gtk2 gtk3 )"
 
 BIN_PN="${PN/-bin/}"
 RESTRICT="strip mirror"
 SRC_URI="
-	amd64? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-x86_64-gtk2.tar.xz )
+	gtk2? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-x86_64-gtk2.tar.xz )
+	gtk3? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-x86_64-gtk3.tar.xz )
 "
 
 DEPEND="
@@ -29,7 +31,8 @@ RDEPEND="
 	>=media-libs/freetype-2.1.0
 	x11-libs/cairo
 	x11-libs/gdk-pixbuf
-	>=x11-libs/gtk+-2.10:2
+	gtk2? ( >=x11-libs/gtk+-2.24:2 )
+	gtk3? ( >=x11-libs/gtk+-3.22:3 )
 	x11-libs/libX11
 	x11-libs/libXcomposite
 	x11-libs/libXdamage
