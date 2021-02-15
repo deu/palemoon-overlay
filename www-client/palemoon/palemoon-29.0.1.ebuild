@@ -24,7 +24,6 @@ IUSE="
 	-necko-wifi
 	gnome
 	gtk2
-	gtk3
 	pulseaudio
 	+devtools
 "
@@ -57,7 +56,7 @@ RDEPEND="
 	gnome? ( gnome-base/gconf )
 
 	gtk2? ( >=x11-libs/gtk+-2.18.0:2 )
-	gtk3? ( >=x11-libs/gtk+-3.4.0:3 )
+	!gtk2? ( >=x11-libs/gtk+-3.4.0:3 )
 
 	media-libs/alsa-lib
 	pulseaudio? ( media-sound/pulseaudio )
@@ -70,7 +69,6 @@ RDEPEND="
 REQUIRED_USE="
 	optimize? ( !debug )
 	jemalloc? ( !valgrind )
-	^^ ( gtk2 gtk3 )
 	necko-wifi? ( dbus )
 "
 
@@ -135,9 +133,7 @@ src_configure() {
 
 	if use gtk2; then
 		mozconfig_enable default-toolkit=\"cairo-gtk2\"
-	fi
-
-	if use gtk3; then
+	else
 		mozconfig_enable default-toolkit=\"cairo-gtk3\"
 	fi
 
