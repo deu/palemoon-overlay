@@ -1,7 +1,7 @@
 EAPI=6
 
 REQUIRED_BUILDSPACE='16G'
-GCC_SUPPORTED_VERSIONS="4.9 5.4 7.3 8.2 8.3 9.2 9.3"
+GCC_SUPPORTED_VERSIONS="7.5 8.5 9.3 9.4 10.3"
 
 inherit palemoon-5 git-r3 eutils flag-o-matic pax-utils
 
@@ -23,13 +23,13 @@ IUSE="
 	dbus
 	-necko-wifi
 	gnome
-	+gtk2
-	-gtk3
+	gtk2
+	gtk3
 	pulseaudio
 	+devtools
 "
 
-EGIT_REPO_URI="https://github.com/MoonchildProductions/Pale-Moon.git"
+EGIT_REPO_URI="https://repo.palemoon.org/MoonchildProductions/Pale-Moon.git"
 EGIT_COMMIT="${PV}_Release"
 
 DEPEND="
