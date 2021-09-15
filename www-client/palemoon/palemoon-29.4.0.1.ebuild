@@ -29,7 +29,7 @@ IUSE="
 	+devtools
 "
 
-EGIT_REPO_URI="https://repo.palemoon.org/MoonchildProductions/Pale-Moon.git"
+EGIT_REPO_URI="https://repo.palemoon.org/mcp-graveyard/Pale-Moon.git"
 EGIT_COMMIT="${PV}_Release"
 
 DEPEND="
