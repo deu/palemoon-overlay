@@ -130,7 +130,11 @@ mozconfig_var() {
 }
 
 set_pref() {
-	echo "pref(\"$1\", $2);" >> "${S}/${obj_dir}/dist/bin/browser/defaults/preferences/palemoon.js"
+	if [ "$(printf '%s\n' "30.0.0" "${PV}" | sort -V | head -n1)" = "30.0.0" ]; then
+		echo "pref(\"$1\", $2);" >> "${S}/${obj_dir}/dist/bin/defaults/pref/palemoon.js"
+	else
+		echo "pref(\"$1\", $2);" >> "${S}/${obj_dir}/dist/bin/browser/defaults/preferences/palemoon.js"
+	fi
 }
 
 
@@ -142,11 +146,7 @@ install_branding_files() {
 	cp -rL "${S}/${obj_dir}/dist/branding" "${extracted_dir}/"
 	local size sizes icon_path icon name
 	sizes="16 32 48"
-	if [ "$(printf '%s\n' "30.0.0" "${PV}" | sort -V | head -n1)" = "30.0.0" ]; then
-		icon_path="${extracted_dir}/browser/branding/unofficial"
-	else
-		icon_path="${extracted_dir}/branding"
-	fi
+	icon_path="${extracted_dir}/branding"
 	icon="${PN}"
 	name="Pale Moon"
 	for size in ${sizes}; do
