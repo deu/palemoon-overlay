@@ -100,7 +100,11 @@ unsupported_compiler_error() {
 ###
 
 mozconfig_init() {
-	echo "ac_add_options --enable-application=palemoon" > "${S}/.mozconfig"
+	if [ "$(printf '%s\n' "30.0.0" "${PV}" | sort -V | head -n1)" = "30.0.0" ]; then
+		echo "ac_add_options --enable-application=browser" > "${S}/.mozconfig"
+	else
+		echo "ac_add_options --enable-application=palemoon" > "${S}/.mozconfig"
+	fi
 }
 
 mozconfig_enable() {
@@ -138,7 +142,11 @@ install_branding_files() {
 	cp -rL "${S}/${obj_dir}/dist/branding" "${extracted_dir}/"
 	local size sizes icon_path icon name
 	sizes="16 32 48"
-	icon_path="${extracted_dir}/branding"
+	if [ "$(printf '%s\n' "30.0.0" "${PV}" | sort -V | head -n1)" = "30.0.0" ]; then
+		icon_path="${extracted_dir}/browser/branding/unofficial"
+	else
+		icon_path="${extracted_dir}/branding"
+	fi
 	icon="${PN}"
 	name="Pale Moon"
 	for size in ${sizes}; do

@@ -64,7 +64,7 @@ src_install() {
 
 	local size sizes icon_path icon name
 	sizes="16 32 48"
-	icon_path="${S}/browser/chrome/icons/default"
+	icon_path="${S}/chrome/icons/default"
 	icon="${PN}"
 	name="Pale Moon"
 
@@ -77,7 +77,7 @@ src_install() {
 	insinto /usr/share/icons/hicolor/128x128/apps
 	newins "${icon_path}/../../../icons/mozicon128.png" "${icon}.png" || die
 	# Install a 48x48 icon into /usr/share/pixmaps for legacy DEs:
-	newicon "${S}"/browser/chrome/icons/default/default48.png ${PN}.png
+	newicon "${S}"/chrome/icons/default/default48.png ${PN}.png
 	domenu "${FILESDIR}"/icon/${PN}.desktop
 	sed -i -e "s:@NAME@:${name}:" -e "s:@ICON@:${icon}:" \
 		"${ED}usr/share/applications/${PN}.desktop" || die
