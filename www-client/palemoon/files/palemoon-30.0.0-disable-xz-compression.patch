@@ -1,0 +1,28 @@
+diff --git a/platform/system/packager/base.mk b/platform/system/packager/base.mk
+index fb1114575..0502d4f61 100644
+--- a/platform/system/packager/base.mk
++++ b/platform/system/packager/base.mk
+@@ -247,8 +247,8 @@ PKG_INSTALLER_FILENAME = $(PKG_BASENAME).installer.exe
+ PKG_GENERIC_OS = windows
+ else
+ # Archiver command and filename for not-windows target operating systems
+-PKG_ARCHIVER_CMD = $(TAR) cfJv
+-PKG_ARCHIVE_FILENAME = $(PKG_BASENAME).tar.xz
++PKG_ARCHIVER_CMD = $(TAR) cfv
++PKG_ARCHIVE_FILENAME = $(PKG_BASENAME).tar
+ 
+ # Generic OS name when specifics aren't as important
+ PKG_GENERIC_OS = unix
+diff --git a/platform/system/packager/packager.mk b/platform/system/packager/packager.mk
+index 22097fff3..f6275b378 100644
+--- a/platform/system/packager/packager.mk
++++ b/platform/system/packager/packager.mk
+@@ -88,7 +88,7 @@ archive: stage-package
+ ifeq ($(OS_ARCH),WINNT)
+ 	cd $(DIST); $(CYGWIN_WRAPPER) $(PKG_ARCHIVER_CMD) $(PKG_ARCHIVE_FILENAME) $(PKG_STAGE_DIR)
+ else
+-	cd $(DIST); XZ_OPT=-9e $(PKG_ARCHIVER_CMD) $(PKG_ARCHIVE_FILENAME) $(PKG_STAGE_DIR)
++	cd $(DIST); $(PKG_ARCHIVER_CMD) $(PKG_ARCHIVE_FILENAME) $(PKG_STAGE_DIR)
+ endif
+ 
+ # ---------------------------------------------------------------------------------------------------------------------

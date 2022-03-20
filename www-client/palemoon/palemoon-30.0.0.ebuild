@@ -75,6 +75,8 @@ REQUIRED_USE="
 	necko-wifi? ( dbus )
 "
 
+PATCHES=("${FILESDIR}/${PN}-30.0.0-disable-xz-compression.patch")
+
 src_prepare() {
 	# Ensure that our plugins dir is enabled by default:
 	sed -i -e "s:/usr/lib/mozilla/plugins:/usr/lib/nsbrowser/plugins:" \
@@ -205,7 +207,7 @@ src_install() {
 	mkdir -p "${extracted_dir}"
 	cd "${extracted_dir}"
 	einfo "Extracting the package..."
-	tar xJpf "${S}/${obj_dir}/dist/${P}.linux-${CTARGET_default%%-*}.tar.xz"
+	tar xpf "${S}/${obj_dir}/dist/${P}.linux-${CTARGET_default%%-*}.tar"
 	einfo "Installing the package..."
 	local dest_libdir="/usr/$(get_libdir)"
 	mkdir -p "${D}/${dest_libdir}"
