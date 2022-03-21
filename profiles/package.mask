@@ -1,0 +1,3 @@
+# v30 milestone has been recalled
+>=www-client/palemoon-30.0.0
+>=www-client/palemoon-bin-30.0.0
