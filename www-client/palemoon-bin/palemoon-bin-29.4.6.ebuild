@@ -14,8 +14,8 @@ REQUIRED_USE="^^ ( gtk2 gtk3 )"
 BIN_PN="${PN/-bin/}"
 RESTRICT="strip mirror"
 SRC_URI="
-	gtk2? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-x86_64-gtk2.tar.xz )
-	gtk3? ( https://linux.palemoon.org/datastore/release/${BIN_PN}-${PV}.linux-x86_64-gtk3.tar.xz )
+	gtk2? ( https://archive.palemoon.org/${BIN_PN}/29.x/${PV}/${BIN_PN}-${PV}.linux-x86_64-gtk2.tar.xz )
+	gtk3? ( https://archive.palemoon.org/${BIN_PN}/29.x/${PV}/${BIN_PN}-${PV}.linux-x86_64-gtk3.tar.xz )
 "
 
 DEPEND="
