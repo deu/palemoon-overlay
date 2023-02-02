@@ -2,11 +2,12 @@
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 <use>
+	<flag name="av1">Enable AV1 codec support</flag>
 	<flag name="devtools">Enable Mozilla Developer Tools</flag>
-	<flag name="shared-js">Create a shared JavaScript library</flag>
 	<flag name="gtk2">Use <pkg>x11-libs/gtk+</pkg>:2</flag>
 	<flag name="gtk3">Use <pkg>x11-libs/gtk+</pkg>:3</flag>
 	<flag name="jemalloc">Replace memory allocator with jemalloc</flag>
+	<flag name="jpegxl">Enable JPEG XL support</flag>
 	<flag name="necko-wifi">Enable the necko wifi scanner</flag>
 	<flag name="official-branding">Enable official branding</flag>
 	<flag name="optimize">Enable compiler optimization</flag>
