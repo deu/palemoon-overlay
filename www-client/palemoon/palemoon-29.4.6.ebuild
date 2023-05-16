@@ -23,9 +23,9 @@ IUSE="
 	threads
 	debug
 	+jemalloc
-	-valgrind
+	valgrind
 	dbus
-	-necko-wifi
+	necko-wifi
 	gnome
 	gtk2
 	gtk3
