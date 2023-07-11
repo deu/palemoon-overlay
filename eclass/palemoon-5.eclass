@@ -1,4 +1,4 @@
-inherit check-reqs gnome2-utils toolchain-funcs xdg-utils
+inherit check-reqs gnome2-utils toolchain-funcs xdg-utils desktop
 
 EXPORT_FUNCTIONS pkg_pretend pkg_preinst pkg_postinst pkg_postrm pkg_setup
 

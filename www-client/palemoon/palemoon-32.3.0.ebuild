@@ -1,4 +1,4 @@
-EAPI=6
+EAPI=8
 
 REQUIRED_BUILDSPACE='16G'
 # Check https://developer.palemoon.org/build/linux/ for supported versions
