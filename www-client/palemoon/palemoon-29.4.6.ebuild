@@ -6,7 +6,7 @@ GCC_SUPPORTED_VERSIONS="7.5 8.5 9.3 9.4 10.3"
 
 inherit palemoon-5 eutils flag-o-matic pax-utils
 
-KEYWORDS="~x86 amd64"
+KEYWORDS="~x86 ~amd64"
 DESCRIPTION="Pale Moon Web Browser"
 HOMEPAGE="https://www.palemoon.org/"
 
