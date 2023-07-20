@@ -47,8 +47,6 @@ RDEPEND="
 	media-libs/freetype
 	media-libs/fontconfig
 
-	optimize? ( sys-libs/glibc )
-
 	valgrind? ( dev-util/valgrind )
 
 	dbus? (
