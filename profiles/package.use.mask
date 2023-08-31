@@ -1,1 +1,1 @@
-www-client/palemoon gtk3
+www-client/palemoon gtk3 system-hunspell system-cairo
