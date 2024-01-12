@@ -220,5 +220,5 @@ src_install() {
 	pax-mark m "${D}/${dest_libdir}/${PN}/"{palemoon,palemoon-bin,plugin-container}
 
 	# Install icons and .desktop for menu entry:
-	install_branding_files
+	install_branding_files "Pale Moon"
 }
