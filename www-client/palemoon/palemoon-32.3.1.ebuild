@@ -29,6 +29,15 @@ IUSE="
 	+devtools
 	+av1
 	+jpegxl
+	strip
+	eme
+	tests
+	gamepad
+	system-hunspell
+	system-ffi
+	system-cairo
+	system-extension-dirs
+	system-pixman
 "
 
 EGIT_REPO_URI="https://repo.palemoon.org/MoonchildProductions/Pale-Moon.git"
@@ -46,6 +55,14 @@ RDEPEND="
 	app-arch/zip
 	media-libs/freetype
 	media-libs/fontconfig
+
+	system-hunspell? ( app-text/hunspell )
+
+	system-ffi? ( dev-libs/libffi )
+
+	system-cairo? ( x11-libs/cairo )
+
+	system-pixman? ( x11-libs/pixman )
 
 	valgrind? ( dev-util/valgrind )
 
@@ -88,7 +105,47 @@ src_configure() {
 	# Basic configuration:
 	mozconfig_init
 
-	mozconfig_disable updater install-strip accessibility gconf
+	mozconfig_disable updater accessibility gconf webrtc
+
+	if use strip; then
+		mozconfig_enable strip
+		mozconfig_enable install-strip
+	else
+                mozconfig_disable strip
+                mozconfig_disable install-strip
+	fi
+
+	if use eme; then
+		mozconfig_enable eme
+	else
+		mozconfig_disable eme
+	fi
+
+	if use gamepad; then
+		mozconfig_enable gamepad
+	else
+		mozconfig_disable gamepad
+	fi
+
+	if use system-hunspell; then
+		mozconfig_enable system-hunspell
+	fi
+
+	if use system-ffi; then
+		mozconfig_enable system-ffi
+	fi
+
+	if use system-cairo; then
+		mozconfig_enable system-cairo
+	fi
+
+	if use system-extension-dirs; then
+		mozconfig_enable system-extension-dirs
+	fi
+
+	if use system-pixman; then
+		mozconfig_enable system-pixman
+	fi
 
 	if use official-branding; then
 		official-branding_warning
@@ -101,7 +158,8 @@ src_configure() {
 			O="${O} -msse2 -mfpmath=sse"
 		fi
 		mozconfig_enable "optimize=\"${O}\""
-		filter-flags '-O*' '-msse2' '-mfpmath=sse'
+		# -ffast-math causes runtime failures
+		filter-flags '-O*' '-msse2' '-mfpmath=sse' '-ffast-math'
 	else
 		mozconfig_disable optimize
 	fi
@@ -113,10 +171,14 @@ src_configure() {
 	if use debug; then
 		mozconfig_var MOZ_DEBUG_SYMBOLS 1
 		mozconfig_enable "debug-symbols=\"-gdwarf-2\""
+	else
+		mozconfig_disable debug
 	fi
 
 	if use jemalloc; then
 		mozconfig_enable jemalloc
+	else
+		mozconfig_disable jemalloc
 	fi
 
 	if use valgrind; then
