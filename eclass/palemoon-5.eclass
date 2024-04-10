@@ -2,7 +2,6 @@ inherit check-reqs gnome2-utils toolchain-funcs xdg-utils desktop
 
 EXPORT_FUNCTIONS pkg_pretend pkg_preinst pkg_postinst pkg_postrm pkg_setup
 
-
 ###
 # Package
 ###
@@ -43,7 +42,6 @@ palemoon-5_pkg_setup() {
 	# options false positives when toplevel configure passes downwards:
 	export QA_CONFIGURE_OPTIONS=".*"
 }
-
 
 ###
 # Messages
@@ -94,7 +92,6 @@ unsupported_compiler_error() {
 	fi
 }
 
-
 ###
 # Configuration
 ###
@@ -129,7 +126,6 @@ set_pref() {
 	echo "pref(\"$1\", $2);" >> "${S}/${obj_dir}/dist/bin/browser/defaults/preferences/palemoon.js"
 }
 
-
 ###
 # Branding
 ###
@@ -140,7 +136,7 @@ install_branding_files() {
 	sizes="16 32 48"
 	icon_path="${extracted_dir}/branding"
 	icon="${PN}"
-	name="Pale Moon"
+	name="${1}"
 	for size in ${sizes}; do
 		insinto "/usr/share/icons/hicolor/${size}x${size}/apps"
 		newins "${icon_path}/default${size}.png" "${icon}.png"
