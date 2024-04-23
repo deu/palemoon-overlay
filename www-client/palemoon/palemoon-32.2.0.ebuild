@@ -50,7 +50,7 @@ RDEPEND="
 
 	optimize? ( sys-libs/glibc )
 
-	valgrind? ( dev-util/valgrind )
+	valgrind? ( dev-debug/valgrind )
 
 	dbus? (
 		>=sys-apps/dbus-0.60
