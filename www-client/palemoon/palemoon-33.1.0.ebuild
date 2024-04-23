@@ -6,12 +6,11 @@ GCC_SUPPORTED_VERSIONS="7.5 8.5 9.3 9.4 10.3 11.3 12.2 12.3 13.2 13.3"
 
 inherit palemoon-5 git-r3 flag-o-matic pax-utils xdg
 
-KEYWORDS="~amd64 ~x86"
 DESCRIPTION="Pale Moon Web Browser"
 HOMEPAGE="https://www.palemoon.org/"
-
-SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
+SLOT="0"
+KEYWORDS="~amd64 ~x86"
 IUSE="
 	+official-branding
 	+optimize
