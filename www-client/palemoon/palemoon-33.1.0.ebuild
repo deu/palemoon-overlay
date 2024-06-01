@@ -87,7 +87,7 @@ src_configure() {
 	# Basic configuration:
 	mozconfig_init
 
-	mozconfig_disable updater install-strip accessibility gconf
+	mozconfig_disable updater install-strip accessibility gconf gold
 
 	if use official-branding; then
 		official-branding_warning
