@@ -34,7 +34,6 @@ EGIT_REPO_URI="https://repo.palemoon.org/MoonchildProductions/Pale-Moon.git"
 EGIT_COMMIT="${PV}_Release"
 
 DEPEND="
-	>=dev-build/autoconf-2.13:2.1
 	dev-lang/python:2.7
 	>=dev-lang/perl-5.6
 	dev-lang/yasm
@@ -166,7 +165,6 @@ src_configure() {
 
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
 	mozconfig_var PYTHON $(which python2)
-	mozconfig_var AUTOCONF $(which autoconf-2.13)
 	mozconfig_var MOZ_MAKE_FLAGS "\"${MAKEOPTS}\""
 
 	# Shorten obj dir to limit some errors linked to the path size hitting
