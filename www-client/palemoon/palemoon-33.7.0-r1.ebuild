@@ -17,7 +17,7 @@ IUSE="
 	cpu_flags_x86_avx
 	cpu_flags_x86_sse
 	cpu_flags_x86_sse2
-	threads
+	+threads
 	debug
 	+jemalloc
 	valgrind
