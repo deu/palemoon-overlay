@@ -103,7 +103,7 @@ src_configure() {
 			O="${O} -msse2 -mfpmath=sse"
 		fi
 		mozconfig_enable "optimize=\"${O}\""
-		filter-flags '-O*' '-mavx' '-msse2' '-mfpmath=sse'
+		filter-flags '-O*' '-mavx' '-msse2' '-mfpmath=sse' '-flto*' '-Werror*'
 	else
 		mozconfig_disable optimize
 	fi
