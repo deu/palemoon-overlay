@@ -185,7 +185,7 @@ src_compile() {
 	# See: https://gitweb.gentoo.org/proj/portage.git/tree/bin/isolated-functions.sh
 	export XARGS="$(which xargs)"
 
-	python2 "${S}/platform/mach" build || die
+	python2 "${S}/platform/mach" build --verbose || die
 }
 
 src_install() {
