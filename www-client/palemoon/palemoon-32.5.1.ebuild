@@ -60,7 +60,7 @@ RDEPEND="
 	media-libs/alsa-lib
 	pulseaudio? ( media-libs/libpulse )
 
-	media-video/ffmpeg[x264]
+	<media-video/ffmpeg-7[x264]
 
 	necko-wifi? ( net-wireless/wireless-tools )
 "
