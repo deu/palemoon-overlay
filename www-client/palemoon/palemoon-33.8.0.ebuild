@@ -2,19 +2,19 @@ EAPI=8
 
 REQUIRED_BUILDSPACE='16G'
 # Check https://developer.palemoon.org/build/linux/ for supported versions
-GCC_SUPPORTED_VERSIONS="7.5 8.5 9.3 9.4 10.3 11.3 12.2 12.3"
+GCC_SUPPORTED_VERSIONS="7.5 8.5 9.3 9.4 10.3 11.3 12.2 12.3 13.2 13.3 14.1 14.2"
 
-inherit palemoon-5 git-r3 flag-o-matic pax-utils
+inherit palemoon-5 git-r3 flag-o-matic pax-utils xdg
 
-KEYWORDS="~amd64 ~x86"
 DESCRIPTION="Pale Moon Web Browser"
 HOMEPAGE="https://www.palemoon.org/"
-
-SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
+SLOT="0"
+KEYWORDS="~amd64 ~x86"
 IUSE="
 	+official-branding
 	+optimize
+	cpu_flags_x86_avx
 	cpu_flags_x86_sse
 	cpu_flags_x86_sse2
 	threads
@@ -28,14 +28,12 @@ IUSE="
 	pulseaudio
 	+devtools
 	+av1
-	+jpegxl
 "
 
 EGIT_REPO_URI="https://repo.palemoon.org/MoonchildProductions/Pale-Moon.git"
 EGIT_COMMIT="${PV}_Release"
 
 DEPEND="
-	>=dev-build/autoconf-2.13:2.1
 	dev-lang/python:2.7
 	>=dev-lang/perl-5.6
 	dev-lang/yasm
@@ -58,7 +56,7 @@ RDEPEND="
 	gtk3? ( >=x11-libs/gtk+-3.4.0:3 )
 
 	media-libs/alsa-lib
-	pulseaudio? ( media-sound/pulseaudio )
+	pulseaudio? ( media-libs/libpulse )
 
 	<media-video/ffmpeg-7[x264]
 
@@ -71,10 +69,6 @@ REQUIRED_USE="
 	^^ ( gtk2 gtk3 )
 	necko-wifi? ( dbus )
 "
-
-PATCHES=(
-		"${FILESDIR}/ffmpeg.git-effadce6c756247ea8bae32dc13bb3e6f464f0eb.patch"
-	)
 
 src_prepare() {
 	# Ensure that our plugins dir is enabled by default:
@@ -92,7 +86,7 @@ src_configure() {
 	# Basic configuration:
 	mozconfig_init
 
-	mozconfig_disable updater install-strip accessibility gconf
+	mozconfig_disable updater install-strip accessibility gconf gold
 
 	if use official-branding; then
 		official-branding_warning
@@ -101,11 +95,14 @@ src_configure() {
 
 	if use optimize; then
 		O='-O2'
+		if use cpu_flags_x86_avx; then
+			O="${O} -mavx"
+		fi
 		if use cpu_flags_x86_sse && use cpu_flags_x86_sse2; then
 			O="${O} -msse2 -mfpmath=sse"
 		fi
 		mozconfig_enable "optimize=\"${O}\""
-		filter-flags '-O*' '-msse2' '-mfpmath=sse'
+		filter-flags '-O*' '-mavx' '-msse2' '-mfpmath=sse'
 	else
 		mozconfig_disable optimize
 	fi
@@ -155,10 +152,6 @@ src_configure() {
 		mozconfig_enable av1
 	fi
 
-	if use jpegxl; then
-		mozconfig_enable jxl
-	fi
-
 	# Enabling this causes xpcshell to hang during the packaging process,
 	# so disabling it until the cause can be tracked down. It most likely
 	# has something to do with the sandbox since the issue goes away when
@@ -171,7 +164,6 @@ src_configure() {
 
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
 	mozconfig_var PYTHON $(which python2)
-	mozconfig_var AUTOCONF $(which autoconf-2.13)
 	mozconfig_var MOZ_MAKE_FLAGS "\"${MAKEOPTS}\""
 
 	# Shorten obj dir to limit some errors linked to the path size hitting
@@ -210,7 +202,7 @@ src_install() {
 	mkdir -p "${extracted_dir}"
 	cd "${extracted_dir}" || die
 	einfo "Extracting the package..."
-	tar xjpf "${S}/${obj_dir}/dist/${P}.linux-${CTARGET_default%%-*}.tar.bz2" || die
+	tar xjpf "${S}/${obj_dir}/dist/${P}.linux-"*".tar.bz2" || die
 	einfo "Installing the package..."
 	local dest_libdir="/usr/$(get_libdir)"
 	mkdir -p "${D}/${dest_libdir}"
