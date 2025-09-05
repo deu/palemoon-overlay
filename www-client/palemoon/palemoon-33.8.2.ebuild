@@ -2,7 +2,7 @@ EAPI=8
 
 REQUIRED_BUILDSPACE='16G'
 # Check https://developer.palemoon.org/build/linux/ for supported versions
-GCC_SUPPORTED_VERSIONS="7.5 8.5 9.3 9.4 10.3 11.3 12.2 12.3 13.2 13.3"
+GCC_SUPPORTED_VERSIONS="7.5 8.5 9.3 9.4 10.3 11.3 12.2 12.3 13.2 13.3 14.1 14.2"
 
 inherit palemoon-5 git-r3 flag-o-matic pax-utils xdg
 
@@ -14,6 +14,7 @@ KEYWORDS="~amd64 ~x86"
 IUSE="
 	+official-branding
 	+optimize
+	cpu_flags_x86_avx
 	cpu_flags_x86_sse
 	cpu_flags_x86_sse2
 	threads
@@ -27,7 +28,6 @@ IUSE="
 	pulseaudio
 	+devtools
 	+av1
-	+jpegxl
 "
 
 EGIT_REPO_URI="https://repo.palemoon.org/MoonchildProductions/Pale-Moon.git"
@@ -95,11 +95,14 @@ src_configure() {
 
 	if use optimize; then
 		O='-O2'
+		if use cpu_flags_x86_avx; then
+			O="${O} -mavx"
+		fi
 		if use cpu_flags_x86_sse && use cpu_flags_x86_sse2; then
 			O="${O} -msse2 -mfpmath=sse"
 		fi
 		mozconfig_enable "optimize=\"${O}\""
-		filter-flags '-O*' '-msse2' '-mfpmath=sse'
+		filter-flags '-O*' '-mavx' '-msse2' '-mfpmath=sse'
 	else
 		mozconfig_disable optimize
 	fi
@@ -147,10 +150,6 @@ src_configure() {
 
 	if use av1; then
 		mozconfig_enable av1
-	fi
-
-	if use jpegxl; then
-		mozconfig_enable jxl
 	fi
 
 	# Enabling this causes xpcshell to hang during the packaging process,
@@ -203,7 +202,7 @@ src_install() {
 	mkdir -p "${extracted_dir}"
 	cd "${extracted_dir}" || die
 	einfo "Extracting the package..."
-	tar xjpf "${S}/${obj_dir}/dist/${P}.linux-${CTARGET_default%%-*}.tar.bz2" || die
+	tar xjpf "${S}/${obj_dir}/dist/${P}.linux-"*".tar.bz2" || die
 	einfo "Installing the package..."
 	local dest_libdir="/usr/$(get_libdir)"
 	mkdir -p "${D}/${dest_libdir}"
