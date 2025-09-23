@@ -2,3 +2,6 @@
 =www-client/palemoon-30.0.0
 =www-client/palemoon-30.0.1
 =www-client/palemoon-bin-30.0.0
+
+# https://forum.palemoon.org/viewtopic.php?f=5&t=32750
+=www-client/palemoon-33.9.0
