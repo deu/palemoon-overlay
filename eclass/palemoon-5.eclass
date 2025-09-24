@@ -17,7 +17,7 @@ palemoon-5_pkg_pretend() {
 	if [[ $PALEMOON_ENABLE_UNSUPPORTED_COMPILERS == 1 ]]; then
 		unsupported_compiler_warning $(tc-get-compiler-type)
 	else
-		if ! [[ tc-is-gcc && "$GCC_SUPPORTED_VERSIONS" =~ (^| )"$(gcc-version)"($| ) ]]; then
+		if ! [[ tc-is-gcc && "$GCC_SUPPORTED_VERSIONS" =~ (^| )"$(gcc-major-version)"($| ) ]]; then
 			unsupported_compiler_error $(tc-get-compiler-type)
 			die
 		fi
