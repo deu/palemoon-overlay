@@ -2,7 +2,7 @@ EAPI=8
 
 REQUIRED_BUILDSPACE='16G'
 # Check https://developer.palemoon.org/build/linux/ for supported versions
-GCC_SUPPORTED_VERSIONS="7 8 9 10 11 12 13 14"
+GCC_SUPPORTED_VERSIONS="9 10 11 12 13 14 15"
 
 inherit palemoon-5 git-r3 flag-o-matic pax-utils xdg
 
@@ -28,7 +28,6 @@ IUSE="
 	pulseaudio
 	+devtools
 	+av1
-	+jpegxl
 "
 
 EGIT_REPO_URI="https://repo.palemoon.org/MoonchildProductions/Pale-Moon.git"
@@ -59,7 +58,7 @@ RDEPEND="
 	media-libs/alsa-lib
 	pulseaudio? ( media-libs/libpulse )
 
-	<media-video/ffmpeg-7[x264]
+	media-video/ffmpeg[x264]
 
 	necko-wifi? ( net-wireless/wireless-tools )
 "
@@ -87,7 +86,7 @@ src_configure() {
 	# Basic configuration:
 	mozconfig_init
 
-	mozconfig_disable updater install-strip accessibility gconf gold
+	mozconfig_disable updater install-strip accessibility gold
 
 	if use official-branding; then
 		official-branding_warning
@@ -151,10 +150,6 @@ src_configure() {
 
 	if use av1; then
 		mozconfig_enable av1
-	fi
-
-	if use jpegxl; then
-		mozconfig_enable jxl
 	fi
 
 	# Enabling this causes xpcshell to hang during the packaging process,
