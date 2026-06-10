@@ -2,7 +2,7 @@ EAPI=8
 
 REQUIRED_BUILDSPACE='16G'
 # Check https://developer.palemoon.org/build/linux/ for supported versions
-GCC_SUPPORTED_VERSIONS="7 8 9 10 11 12 13 14"
+GCC_SUPPORTED_VERSIONS="9 10 11 12 13 14 15"
 
 inherit palemoon-5 git-r3 flag-o-matic pax-utils xdg
 
@@ -34,7 +34,7 @@ EGIT_REPO_URI="https://repo.palemoon.org/MoonchildProductions/Pale-Moon.git"
 EGIT_COMMIT="${PV}_Release"
 
 DEPEND="
-	dev-lang/python:2.7
+	>=dev-lang/python-3
 	>=dev-lang/perl-5.6
 	dev-lang/yasm
 "
@@ -49,7 +49,6 @@ RDEPEND="
 
 	dbus? (
 		>=sys-apps/dbus-0.60
-		>=dev-libs/dbus-glib-0.60
 	)
 
 	gtk2? ( >=x11-libs/gtk+-2.18.0:2 )
@@ -58,7 +57,7 @@ RDEPEND="
 	media-libs/alsa-lib
 	pulseaudio? ( media-libs/libpulse )
 
-	<media-video/ffmpeg-7[x264]
+	media-video/ffmpeg[x264]
 
 	necko-wifi? ( net-wireless/wireless-tools )
 "
@@ -86,7 +85,7 @@ src_configure() {
 	# Basic configuration:
 	mozconfig_init
 
-	mozconfig_disable updater install-strip accessibility gconf gold
+	mozconfig_disable updater install-strip accessibility gold
 
 	if use official-branding; then
 		official-branding_warning
@@ -163,7 +162,7 @@ src_configure() {
 	append-ldflags -Wl,-rpath="${EPREFIX}/usr/$(get_libdir)/palemoon"
 
 	export MOZBUILD_STATE_PATH="${WORKDIR}/mach_state"
-	mozconfig_var PYTHON $(which python2)
+	mozconfig_var PYTHON $(which python3)
 	mozconfig_var MOZ_MAKE_FLAGS "\"${MAKEOPTS}\""
 
 	# Shorten obj dir to limit some errors linked to the path size hitting
@@ -180,7 +179,7 @@ src_compile() {
 	# See: https://gitweb.gentoo.org/proj/portage.git/tree/bin/isolated-functions.sh
 	export XARGS="$(which xargs)"
 
-	python2 "${S}/platform/mach" build || die
+	python3 "${S}/platform/mach" build || die
 }
 
 src_install() {
@@ -197,7 +196,7 @@ src_install() {
 	# Gotta create the package, unpack it and manually install the files
 	# from there not to miss anything (e.g. the statusbar extension):
 	einfo "Creating the package..."
-	python2 "${S}/platform/mach" mozpackage || die
+	python3 "${S}/platform/mach" mozpackage || die
 	local extracted_dir="${T}/package"
 	mkdir -p "${extracted_dir}"
 	cd "${extracted_dir}" || die
